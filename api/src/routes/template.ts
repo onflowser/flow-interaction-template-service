@@ -1,6 +1,4 @@
 import express, { Request, Response, Router } from "express";
-import { body } from "express-validator";
-import { validateRequest } from "../middlewares/validate-request";
 import { TemplateService } from "../services/template";
 import { genHash } from "../utils/gen-hash";
 import { mixpanelTrack } from "../utils/mixpanel";
@@ -13,18 +11,12 @@ function templateRouter(
   const router = express.Router();
 
   router.get("/templates", async (req: Request, res: Response) => {
-    const name = req.query.name as string;
+    const name = req.query.name as string | undefined;
 
     if (!name) {
-      mixpanelTrack("get_template_by_name", {
-        name,
-        status: 400,
-      });
+      const allTemplates = await templateService.getAllTemplates();
 
-      res.status(400);
-      return res.send(
-        `GET /templates-- Required query parameter "name" not provided.`
-      );
+      return res.send(allTemplates)
     }
 
     let templateId: string = "";

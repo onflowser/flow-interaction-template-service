@@ -26,22 +26,29 @@ class TemplateService {
     return newTemplate;
   }
 
-  async getTemplate(templateId: string) {
-    let foundTemplate: Template;
+  async getAllTemplates() {
+    const foundTemplates = await Template.query();
 
-    foundTemplate = (
+    return foundTemplates.map(template => this.deserializeTemplateJson(template))
+  }
+
+  async getTemplate(templateId: string) {
+    const foundTemplate = (
       await Template.query().where({
         id: templateId,
       })
     )[0];
 
-    let foundTemplateJson = foundTemplate?.json_string || null;
+   if (foundTemplate) {
+     return this.deserializeTemplateJson(foundTemplate)
+   } else {
+     return null;
+   }
+  }
 
-    if (typeof foundTemplateJson === "string") {
-      foundTemplateJson = JSON.parse(foundTemplateJson);
-    }
-
-    return foundTemplateJson;
+  private deserializeTemplateJson(template: Template) {
+    let foundTemplateJson = template.json_string;
+    return JSON.parse(foundTemplateJson);
   }
 
   async getTemplateByCadenceASTHash(cadenceASTHash: string, network: string) {
