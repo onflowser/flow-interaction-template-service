@@ -66,6 +66,12 @@ class TemplateService {
           testnet_cadence_ast_sha3_256_hash: cadenceASTHash,
         })
       )[0];
+    } else if (network === "any") {
+      foundTemplate = (
+          await Template.query().where({
+            any_network_cadence_ast_sha3_256_hash: cadenceASTHash,
+          })
+      )[0];
     }
 
     let foundTemplateJson = foundTemplate?.json_string || null;
@@ -193,6 +199,7 @@ class TemplateService {
           testnet_cadence_ast_sha3_256_hash: testnet_cadence
             ? await genHash(await parseCadence(testnet_cadence))
             : undefined,
+          any_network_cadence_ast_sha3_256_hash: await genHash(await parseCadence(this.convertToNewImportSyntax(parsedTemplate)))
         });
 
         templateManifest[parsedTemplate.id] = parsedTemplate;
@@ -204,6 +211,22 @@ class TemplateService {
     await writeFile(
       this.config.templateManifestFile,
       JSON.stringify(templateManifest, null, 2)
+    );
+  }
+
+  // Strips import addresses, converts Cadence to the new import syntax.
+  // https://github.com/onflow/flips/blob/main/application/20220323-contract-imports-syntax.md
+  private convertToNewImportSyntax(template: any) {
+    const replacementPatterns = Object.keys(template.data.dependencies);
+    return replacementPatterns.reduce(
+        (cadence, pattern) => {
+          const contractName = Object.keys(template.data.dependencies[pattern])[0];
+
+          return cadence
+              .replace(new RegExp(`from\\s+${pattern}`), "")
+              .replace(new RegExp(`import\\s+${contractName}`), `import "${contractName}"`)
+        },
+        template.data.cadence,
     );
   }
 }

@@ -7,6 +7,7 @@ export async function up(knex: Knex): Promise<void> {
     table.json("json_string");
     table.text("mainnet_cadence_ast_sha3_256_hash");
     table.text("testnet_cadence_ast_sha3_256_hash");
+    table.text("any_network_cadence_ast_sha3_256_hash");
     table.timestamps(true, true);
   });
 }
