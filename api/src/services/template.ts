@@ -66,6 +66,12 @@ class TemplateService {
           testnet_cadence_ast_sha3_256_hash: cadenceASTHash,
         })
       )[0];
+    } else if (network === "emulator") {
+      foundTemplate = (
+          await Template.query().where({
+            emulator_cadence_ast_sha3_256_hash: cadenceASTHash,
+          })
+      )[0];
     }
 
     let foundTemplateJson = foundTemplate?.json_string || null;
