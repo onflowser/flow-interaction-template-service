@@ -178,6 +178,8 @@ class TemplateService {
           );
         } catch (e) {}
 
+        let emulator_cadence = this.deriveCadenceByEmulatorNetwork(parsedTemplate);
+
         if (!testnet_cadence || testnet_cadence === "") {
           continue parseTemplatesLoop;
         }
@@ -193,6 +195,7 @@ class TemplateService {
           testnet_cadence_ast_sha3_256_hash: testnet_cadence
             ? await genHash(await parseCadence(testnet_cadence))
             : undefined,
+          emulator_cadence_ast_sha3_256_hash: await genHash(await parseCadence(emulator_cadence))
         });
 
         templateManifest[parsedTemplate.id] = parsedTemplate;
@@ -204,6 +207,16 @@ class TemplateService {
     await writeFile(
       this.config.templateManifestFile,
       JSON.stringify(templateManifest, null, 2)
+    );
+  }
+
+  // Strips import addresses, converts Cadence to the new import syntax.
+  // https://github.com/onflow/flips/blob/main/application/20220323-contract-imports-syntax.md
+  private deriveCadenceByEmulatorNetwork(template: any) {
+    const replacementPatterns = Object.keys(template.data.dependencies);
+    return replacementPatterns.reduce(
+        (cadence, pattern) => cadence.replace(`from ${pattern}`, ""),
+        template.data.cadence,
     );
   }
 }
