@@ -66,10 +66,10 @@ class TemplateService {
           testnet_cadence_ast_sha3_256_hash: cadenceASTHash,
         })
       )[0];
-    } else if (network === "emulator") {
+    } else if (network === "any") {
       foundTemplate = (
           await Template.query().where({
-            emulator_cadence_ast_sha3_256_hash: cadenceASTHash,
+            any_network_cadence_ast_sha3_256_hash: cadenceASTHash,
           })
       )[0];
     }
@@ -184,8 +184,6 @@ class TemplateService {
           );
         } catch (e) {}
 
-        let emulator_cadence = this.deriveCadenceByEmulatorNetwork(parsedTemplate);
-
         if (!testnet_cadence || testnet_cadence === "") {
           continue parseTemplatesLoop;
         }
@@ -201,7 +199,7 @@ class TemplateService {
           testnet_cadence_ast_sha3_256_hash: testnet_cadence
             ? await genHash(await parseCadence(testnet_cadence))
             : undefined,
-          emulator_cadence_ast_sha3_256_hash: await genHash(await parseCadence(emulator_cadence))
+          any_network_cadence_ast_sha3_256_hash: await genHash(await parseCadence(this.convertToNewImportSyntax(parsedTemplate)))
         });
 
         templateManifest[parsedTemplate.id] = parsedTemplate;
@@ -218,7 +216,7 @@ class TemplateService {
 
   // Strips import addresses, converts Cadence to the new import syntax.
   // https://github.com/onflow/flips/blob/main/application/20220323-contract-imports-syntax.md
-  private deriveCadenceByEmulatorNetwork(template: any) {
+  private convertToNewImportSyntax(template: any) {
     const replacementPatterns = Object.keys(template.data.dependencies);
     return replacementPatterns.reduce(
         (cadence, pattern) => cadence.replace(`from ${pattern}`, ""),
