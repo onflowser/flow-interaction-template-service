@@ -28,7 +28,9 @@ if (DEV) {
 
 async function run() {
   const config = getConfig(envVars);
-  const db = initDB(config);
+  const db = initDB(config, {
+    database: "sqlite3"
+  });
 
   // Make sure to disconnect from DB when exiting the process
   process.on("SIGTERM", () => {

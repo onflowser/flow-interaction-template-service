@@ -1,10 +1,12 @@
 import { knex } from "knex";
 import { Model } from "objection";
 
-const initDB = (config) => {
+const initDB = (config, options: {
+    database: "postgresql" | "sqlite3"
+}) => {
   // Use a Postgres DB in production.
   const DBConfig =
-    process.env.NODE_ENV === "production"
+    options.database === "postgresql"
       ? {
           client: "postgresql",
           connection: {
