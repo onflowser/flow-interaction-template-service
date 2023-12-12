@@ -1,0 +1,44 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "b07dbf0e292d6231f2a0b4eb559384a678e63856153764d3c7cd9b57ac3e5ab9",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "FlowStaking Stake unstaked flow"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Request to re-stake unstaked tokens: {amount} FLOW",
+                    "zh-CN": "请求重新质押解除质押的代币: {amount} FLOW 代币",
+                    "zh-TW": "請求重新質押解除質押的代幣: {amount} FLOW 代幣"
+                }
+            }
+        },
+        "cadence": "import LockedTokens from 0xLOCKED_TOKEN_ADDRESS\n\ntransaction(amount: UFix64) {\n  let nodeDelegatorProxy: LockedTokens.LockedNodeDelegatorProxy\n\n  prepare(acct: AuthAccount) {\n    let holderRef = acct.borrow<&LockedTokens.TokenHolder>(from: LockedTokens.TokenHolderStoragePath) \n      ?? panic(\"TokenHolder is not saved at specified path\")\n\n    self.nodeDelegatorProxy = holderRef.borrowDelegator()\n  }\n\n  execute {\n    self.nodeDelegatorProxy.delegateUnstakedTokens(amount: amount)\n  }\n}",
+        "dependencies": {
+            "0xLOCKED_TOKEN_ADDRESS": {
+                "LockedTokens": {
+                    "testnet": {
+                        "address": "0x95e019a17d0e23d7",
+                        "contract": "LockedTokens",
+                        "fq_address": "A.0x95e019a17d0e23d7.LockedTokens",
+                        "pin": "8c6baff06e290c032e1dabac5b99c800ef040b06bec84d351d03927c4daf7e75",
+                        "pin_block_height": 138839743
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "amount": {
+                "index": 0,
+                "type": "UFix64",
+                "messages": {}
+            }
+        }
+    }
+}

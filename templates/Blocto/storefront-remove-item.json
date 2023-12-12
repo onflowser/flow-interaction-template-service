@@ -1,0 +1,42 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "d4df1d7649eac368780ab96677ca4a684422a73dc6010147f391bc2482f23c39",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "storefront Remove item"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Remove NFT listing from sale"
+                }
+            }
+        },
+        "cadence": "import NFTStorefront from 0xNFT_STOREFRONT_ADDRESS\n\ntransaction(listingResourceID: UInt64) {\n    let storefront: &NFTStorefront.Storefront{NFTStorefront.StorefrontManager}\n\n    prepare(signer: AuthAccount) {\n        self.storefront = signer.borrow<&NFTStorefront.Storefront{NFTStorefront.StorefrontManager}>(from: NFTStorefront.StorefrontStoragePath)\n            ?? panic(\"Missing or mis-typed NFTStorefront.Storefront\")\n    }\n\n    execute {\n        self.storefront.removeListing(listingResourceID: listingResourceID)\n    }\n}\n",
+        "dependencies": {
+            "0xNFT_STOREFRONT_ADDRESS": {
+                "NFTStorefront": {
+                    "testnet": {
+                        "address": "0x94b06cfca1d8a476",
+                        "contract": "NFTStorefront",
+                        "fq_address": "A.0x94b06cfca1d8a476.NFTStorefront",
+                        "pin": "ba061d95016d5506e9f5d1afda15d82eb066aa8b0552e8b26dc7950fa5714d51",
+                        "pin_block_height": 138899106
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "listingResourceID": {
+                "index": 0,
+                "type": "UInt64",
+                "messages": {}
+            }
+        }
+    }
+}

@@ -1,0 +1,64 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "474ed2bcf18bd7dfc03e839f09d5443c74932c9315390880e92a24fc2d8aee67",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "vesting Release"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Release available tokens from vesting #{vestingID}"
+                }
+            }
+        },
+        "cadence": "import FungibleToken from 0xFUNGIBLE_TOKEN_ADDRESS\nimport NonFungibleToken from 0xNON_FUNGIBLE_TOKEN_ADDRESS\nimport StarlyTokenVesting from 0xSTARLY_TOKEN_VESTING_ADDRESS\n\ntransaction(vestingID: UInt64) {\n    let vestingCollectionRef: &StarlyTokenVesting.Collection\n\n    prepare(acct: AuthAccount) {\n        self.vestingCollectionRef = acct.borrow<&StarlyTokenVesting.Collection>(from: StarlyTokenVesting.CollectionStoragePath)\n            ?? panic(\"Could not borrow reference to the owner's StarlyTokenVesting collection!\")\n    }\n\n    execute {\n        self.vestingCollectionRef.release(id: vestingID)\n    }\n}\n",
+        "dependencies": {
+            "0xFUNGIBLE_TOKEN_ADDRESS": {
+                "FungibleToken": {
+                    "testnet": {
+                        "address": "0x9a0766d93b6608b7",
+                        "contract": "FungibleToken",
+                        "fq_address": "A.0x9a0766d93b6608b7.FungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138895214
+                    }
+                }
+            },
+            "0xNON_FUNGIBLE_TOKEN_ADDRESS": {
+                "NonFungibleToken": {
+                    "testnet": {
+                        "address": "0x631e88ae7f1d7c20",
+                        "contract": "NonFungibleToken",
+                        "fq_address": "A.0x631e88ae7f1d7c20.NonFungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138897942
+                    }
+                }
+            },
+            "0xSTARLY_TOKEN_VESTING_ADDRESS": {
+                "StarlyTokenVesting": {
+                    "testnet": {
+                        "address": "0xd2af9f588d53759d",
+                        "contract": "StarlyTokenVesting",
+                        "fq_address": "A.0xd2af9f588d53759d.StarlyTokenVesting",
+                        "pin": "d00a96b60721e1606bb257a08b3c1d3fa16be292ed87d3e51941c875f673da0f",
+                        "pin_block_height": 138898002
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "vestingID": {
+                "index": 0,
+                "type": "UInt64",
+                "messages": {}
+            }
+        }
+    }
+}

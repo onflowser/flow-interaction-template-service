@@ -1,0 +1,47 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "c56b8bb10e1682b1a61a5d56f4a54cd50aa034042378e8abf1017a4269341a22",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "user Edit comment"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Edit comment"
+                }
+            }
+        },
+        "cadence": "// EditComment-v2\nimport MIKOSEANFT from 0xMIKOSEA_MIKOSEANFT_ADDRESS\n\ntransaction(commentId:UInt64, comment: String){\n    let address: Address\n    var commentDetail: MIKOSEANFT.Comment?\n\n    prepare(signer: AuthAccount) {\n        self.address = signer.address\n        self.commentDetail = nil\n        let comments = MIKOSEANFT.getAllComments()\n        for e in comments {\n            if e.commentId == commentId {\n                self.commentDetail = e\n                break\n            }\n        }\n        if self.commentDetail == nil {\n            panic(\"not found comment\")\n        }\n    }\n\n    execute{\n        MIKOSEANFT.editComment(commentId: commentId, projectId: self.commentDetail!.projectId, itemId: self.commentDetail!.itemId, userAddress: self.address, nftId: self.commentDetail!.nftId, newComment: comment)\n    }\n}",
+        "dependencies": {
+            "0xMIKOSEA_MIKOSEANFT_ADDRESS": {
+                "MIKOSEANFT": {
+                    "testnet": {
+                        "address": "0x713306ac51ac7ddb",
+                        "contract": "MIKOSEANFT",
+                        "fq_address": "A.0x713306ac51ac7ddb.MIKOSEANFT",
+                        "pin": "9524cc8b5eb8bb8f7d8cf4ee3c65374cafa55921d31d6f72ce08d1c4da8aad57",
+                        "pin_block_height": 138900528
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "commentId": {
+                "index": 0,
+                "type": "UInt64",
+                "messages": {}
+            },
+            "comment": {
+                "index": 1,
+                "type": "String",
+                "messages": {}
+            }
+        }
+    }
+}

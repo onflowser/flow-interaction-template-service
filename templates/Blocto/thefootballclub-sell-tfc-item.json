@@ -1,0 +1,91 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "7a44f38bcb9f72e726db4de5d76ccc4e683fdb8332eb9757123ec975af5d87cb",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "TheFootballClub Sell tfc item"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Place NFT item #{saleItemID} for sale for {saleItemPrice} FUSD"
+                }
+            }
+        },
+        "cadence": "import FUSD from 0xFUSD_ADDRESS\nimport NonFungibleToken from 0xNON_FUNGIBLE_TOKEN_ADDRESS\nimport TFCItems from 0xTFC_ITEMS_ADDRESS\nimport NFTStorefront from 0xNFT_STOREFRONT_ADDRESS\nimport FungibleToken from 0xFUNGIBLE_TOKEN_ADDRESS\n\n/*\n    This transaction is used to sell a TFCItem for FUSD\n */\ntransaction(saleItemID: UInt64, saleItemPrice: UFix64) {\n    let fusdReceiver: Capability<&FUSD.Vault{FungibleToken.Receiver}>\n    let TFCItemsProvider: Capability<&TFCItems.Collection{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>\n    let storefront: &NFTStorefront.Storefront\n\n    prepare(acct: AuthAccount) {\n        // We need a provider capability, but one is not provided by default so we create one if needed.\n        let TFCItemsCollectionProviderPrivatePath = /private/TFCItemsCollectionProviderForNFTStorefront\n\n        self.fusdReceiver = acct.getCapability<&FUSD.Vault{FungibleToken.Receiver}>(/public/fusdReceiver)!\n        assert(self.fusdReceiver.borrow() != nil, message: \"Missing or mis-typed FUSD receiver\")\n\n        if !acct.getCapability<&TFCItems.Collection{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(TFCItemsCollectionProviderPrivatePath)!.check() {\n            acct.link<&TFCItems.Collection{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(TFCItemsCollectionProviderPrivatePath, target: TFCItems.CollectionStoragePath)\n        }\n        \n        self.TFCItemsProvider = acct.getCapability<&TFCItems.Collection{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(TFCItemsCollectionProviderPrivatePath)!\n        assert(self.TFCItemsProvider.borrow() != nil, message: \"Missing or mis-typed TFCItems.Collection provider\")\n\n        self.storefront = acct.borrow<&NFTStorefront.Storefront>(from: NFTStorefront.StorefrontStoragePath)\n            ?? panic(\"Missing or mis-typed NFTStorefront Storefront\")\n    }\n\n    execute {\n        let saleCut = NFTStorefront.SaleCut(\n            receiver: self.fusdReceiver,\n            amount: saleItemPrice\n        )\n        self.storefront.createListing(\n            nftProviderCapability: self.TFCItemsProvider,\n            nftType: Type<@TFCItems.NFT>(),\n            nftID: saleItemID,\n            salePaymentVaultType: Type<@FUSD.Vault>(),\n            saleCuts: [saleCut]\n        )\n    }\n}",
+        "dependencies": {
+            "0xFUSD_ADDRESS": {
+                "FUSD": {
+                    "testnet": {
+                        "address": "0xe223d8a629e49c68",
+                        "contract": "FUSD",
+                        "fq_address": "A.0xe223d8a629e49c68.FUSD",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 138881145
+                    }
+                }
+            },
+            "0xNON_FUNGIBLE_TOKEN_ADDRESS": {
+                "NonFungibleToken": {
+                    "testnet": {
+                        "address": "0x631e88ae7f1d7c20",
+                        "contract": "NonFungibleToken",
+                        "fq_address": "A.0x631e88ae7f1d7c20.NonFungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138881196
+                    }
+                }
+            },
+            "0xTFC_ITEMS_ADDRESS": {
+                "TFCItems": {
+                    "testnet": {
+                        "address": "0x91a6217c3b70cae8",
+                        "contract": "TFCItems",
+                        "fq_address": "A.0x91a6217c3b70cae8.TFCItems",
+                        "pin": "9524cc8b5eb8bb8f7d8cf4ee3c65374cafa55921d31d6f72ce08d1c4da8aad57",
+                        "pin_block_height": 138881284
+                    }
+                }
+            },
+            "0xNFT_STOREFRONT_ADDRESS": {
+                "NFTStorefront": {
+                    "testnet": {
+                        "address": "0x94b06cfca1d8a476",
+                        "contract": "NFTStorefront",
+                        "fq_address": "A.0x94b06cfca1d8a476.NFTStorefront",
+                        "pin": "ba061d95016d5506e9f5d1afda15d82eb066aa8b0552e8b26dc7950fa5714d51",
+                        "pin_block_height": 138881323
+                    }
+                }
+            },
+            "0xFUNGIBLE_TOKEN_ADDRESS": {
+                "FungibleToken": {
+                    "testnet": {
+                        "address": "0x9a0766d93b6608b7",
+                        "contract": "FungibleToken",
+                        "fq_address": "A.0x9a0766d93b6608b7.FungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138881356
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "saleItemID": {
+                "index": 0,
+                "type": "UInt64",
+                "messages": {}
+            },
+            "saleItemPrice": {
+                "index": 1,
+                "type": "UFix64",
+                "messages": {}
+            }
+        }
+    }
+}

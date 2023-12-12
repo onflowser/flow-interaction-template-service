@@ -1,0 +1,75 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "72387be8086f1c990ef0a74258c46b99c45047c674e7478d1d094011eaf2c3d8",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "EnemyMetal Withdraw nft"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Withdraw nft(s) and pay a flow fee"
+                }
+            }
+        },
+        "cadence": "import FungibleToken from 0xFUNGIBLE_TOKEN_ADDRESS\nimport FlowToken from 0xFLOW_TOKEN_ADDRESS\nimport NonFungibleToken from 0xNON_FUNGIBLE_TOKEN_ADDRESS\nimport EnemyMetal from 0xENEMY_METAL_ADDRESS\n\npub fun trySetupNft(acct: AuthAccount) {\n    // setup account to receive nfts from EnemyMetal collection\n    if acct.borrow<&EnemyMetal.Collection>(from: EnemyMetal.CollectionStoragePath) == nil {\n        // Create a new empty collection\n        let collection <- EnemyMetal.createEmptyCollection()\n        // save it to the account\n        acct.save(<-collection, to: EnemyMetal.CollectionStoragePath)\n        // create a public capability for the collection\n        acct.link<&EnemyMetal.Collection{NonFungibleToken.CollectionPublic, EnemyMetal.EnemyMetalCollectionPublic}>(EnemyMetal.CollectionPublicPath as! CapabilityPath, target: EnemyMetal.CollectionStoragePath)\n    }\n}\n\n// This transaction is for withdrawing a NFT and charging a flow fee\ntransaction(nftIds: [UInt64], feeflowAmount: UFix64, payee: Address) {\n\n    let userCollectionRef: &EnemyMetal.Collection\n    let payer: AuthAccount\n\n    prepare(user: AuthAccount, payer: AuthAccount) {\n\n        // borrow a reference to the safe NFT collection\n        self.userCollectionRef = user.borrow<&EnemyMetal.Collection>(from: EnemyMetal.CollectionStoragePath)\n            ?? panic(\"Could not borrow a reference to the user's collection\")\n\n        // try setup nft collection for payer\n        trySetupNft(acct: payer)\n\n        self.payer = payer;\n    }\n\n    execute {\n        // borrow a reference to payers Flow vault\n        let payerVault = self.payer.borrow<&FlowToken.Vault{FungibleToken.Provider}>(from: /storage/flowTokenVault)!\n\n        // deposit tokens to payee\n        if feeflowAmount > 0.0 {\n            let payeeCap = getAccount(payee).getCapability<&{FungibleToken.Receiver}>(/public/flowTokenReceiver)\n            if let vaultRef = payeeCap.borrow() {\n                vaultRef.deposit(from: <-payerVault.withdraw(amount: UFix64(feeflowAmount)))\n            } else {\n                panic(\"couldn't get payee vault ref\")\n            }\n        }\n\n        // borrow a public reference to the payer collection\n        let depositRef = self.payer.getCapability(EnemyMetal.CollectionPublicPath)!.borrow<&{NonFungibleToken.CollectionPublic}>()!\n\n        var x = 0;\n        // transfer NFT(s) to recipient\n        while x < nftIds.length {\n            // withdraw the NFT from the owner's collection\n            let nft <- self.userCollectionRef.withdraw(withdrawID: nftIds[x])\n\n            // Deposit the NFT in the recipient's collection\n            depositRef.deposit(token: <-nft)\n            x = x + 1;\n        }\n    }\n}",
+        "dependencies": {
+            "0xFUNGIBLE_TOKEN_ADDRESS": {
+                "FungibleToken": {
+                    "testnet": {
+                        "address": "0x9a0766d93b6608b7",
+                        "contract": "FungibleToken",
+                        "fq_address": "A.0x9a0766d93b6608b7.FungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 139075749
+                    }
+                }
+            },
+            "0xFLOW_TOKEN_ADDRESS": {
+                "FlowToken": {
+                    "testnet": {
+                        "address": "0x7e60df042a9c0868",
+                        "contract": "FlowToken",
+                        "fq_address": "A.0x7e60df042a9c0868.FlowToken",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 139075784
+                    }
+                }
+            },
+            "0xNON_FUNGIBLE_TOKEN_ADDRESS": {
+                "NonFungibleToken": {
+                    "testnet": {
+                        "address": "0x631e88ae7f1d7c20",
+                        "contract": "NonFungibleToken",
+                        "fq_address": "A.0x631e88ae7f1d7c20.NonFungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 139075815
+                    }
+                }
+            },
+            "0xENEMY_METAL_ADDRESS": {
+                "EnemyMetal": {
+                    "testnet": {
+                        "address": "0x244f523a150d41c1",
+                        "contract": "EnemyMetal",
+                        "fq_address": "A.0x244f523a150d41c1.EnemyMetal",
+                        "pin": "7723617b4999f66ce1942ee3847d899b74dca4b43ff6f7ce75f32c7d8b5b43a6",
+                        "pin_block_height": 139075881
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "acct": {
+                "index": 0,
+                "type": "AuthAccount",
+                "messages": {}
+            }
+        }
+    }
+}

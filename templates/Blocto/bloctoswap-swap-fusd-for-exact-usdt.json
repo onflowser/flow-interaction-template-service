@@ -1,0 +1,82 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "cf289663b20e2b88348d448a15deefe0a34c8f6cf62f83cc38650a5f0d0abf9a",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "BloctoSwap Swap fusd for exact usdt"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Swap at most {maxAmountIn} FUSD for {amountOut} USDT",
+                    "zh-CN": "将最多 {maxAmountIn} FUSD 兑换成 {amountOut} USDT",
+                    "zh-TW": "將最多 {maxAmountIn} FUSD 兌換成 {amountOut} USDT"
+                }
+            }
+        },
+        "cadence": "import FungibleToken from 0xFUNGIBLE_TOKEN_ADDRESS\nimport FUSD from 0xFUSD_ADDRESS\nimport TeleportedTetherToken from 0xTELEPORTED_USDT_ADDRESS\nimport FusdUsdtSwapPair from 0xFUSD_USDT_SWAP_ADDRESS\n\ntransaction(maxAmountIn: UFix64, amountOut: UFix64) {\n  prepare(signer: AuthAccount) {\n    let amountIn = FusdUsdtSwapPair.quoteSwapToken1ForExactToken2(amount: amountOut) / (1.0 - FusdUsdtSwapPair.getFeePercentage())\n    assert(amountIn <= maxAmountIn, message: \"Input amount too large\")\n\n    let fusdVault = signer.borrow<&FUSD.Vault>(from: /storage/fusdVault) \n      ?? panic(\"Could not borrow a reference to Vault\")\n\n    let token0Vault <- fusdVault.withdraw(amount: amountIn) as! @FUSD.Vault\n    let token1Vault <- FusdUsdtSwapPair.swapToken1ForToken2(from: <- token0Vault)\n\n      if signer.borrow<&TeleportedTetherToken.Vault>(from: TeleportedTetherToken.TokenStoragePath) == nil {\n    signer.save(<-TeleportedTetherToken.createEmptyVault(), to: TeleportedTetherToken.TokenStoragePath)\n    signer.link<&TeleportedTetherToken.Vault{FungibleToken.Receiver}>(\n      TeleportedTetherToken.TokenPublicReceiverPath,\n      target: TeleportedTetherToken.TokenStoragePath\n    )\n    signer.link<&TeleportedTetherToken.Vault{FungibleToken.Balance}>(\n      TeleportedTetherToken.TokenPublicBalancePath,\n      target: TeleportedTetherToken.TokenStoragePath\n    )\n  }\n    let teleportedTetherTokenVault = signer.borrow<&TeleportedTetherToken.Vault>(from: TeleportedTetherToken.TokenStoragePath) \n      ?? panic(\"Could not borrow a reference to Vault\")\n\n    \n\n    teleportedTetherTokenVault.deposit(from: <- token1Vault)\n  }\n}",
+        "dependencies": {
+            "0xFUNGIBLE_TOKEN_ADDRESS": {
+                "FungibleToken": {
+                    "testnet": {
+                        "address": "0x9a0766d93b6608b7",
+                        "contract": "FungibleToken",
+                        "fq_address": "A.0x9a0766d93b6608b7.FungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 139076219
+                    }
+                }
+            },
+            "0xFUSD_ADDRESS": {
+                "FUSD": {
+                    "testnet": {
+                        "address": "0xe223d8a629e49c68",
+                        "contract": "FUSD",
+                        "fq_address": "A.0xe223d8a629e49c68.FUSD",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 139076233
+                    }
+                }
+            },
+            "0xTELEPORTED_USDT_ADDRESS": {
+                "TeleportedTetherToken": {
+                    "testnet": {
+                        "address": "0xab26e0a07d770ec1",
+                        "contract": "TeleportedTetherToken",
+                        "fq_address": "A.0xab26e0a07d770ec1.TeleportedTetherToken",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 139076242
+                    }
+                }
+            },
+            "0xFUSD_USDT_SWAP_ADDRESS": {
+                "FusdUsdtSwapPair": {
+                    "testnet": {
+                        "address": "0x3502a5dacaf350bb",
+                        "contract": "FusdUsdtSwapPair",
+                        "fq_address": "A.0x3502a5dacaf350bb.FusdUsdtSwapPair",
+                        "pin": "9524cc8b5eb8bb8f7d8cf4ee3c65374cafa55921d31d6f72ce08d1c4da8aad57",
+                        "pin_block_height": 139076275
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "maxAmountIn": {
+                "index": 0,
+                "type": "UFix64",
+                "messages": {}
+            },
+            "amountOut": {
+                "index": 1,
+                "type": "UFix64",
+                "messages": {}
+            }
+        }
+    }
+}

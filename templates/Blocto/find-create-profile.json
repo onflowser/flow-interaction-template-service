@@ -1,0 +1,75 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "78f6a08ed0c6652448e91396c1d3d88da29308e351211707466e8de50e5af3c1",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "Find Create profile"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Create a profile with the name {name}"
+                }
+            }
+        },
+        "cadence": "import FungibleToken from 0xFUNGIBLE_TOKEN_ADDRESS\nimport FUSD from 0xFUSD_ADDRESS\nimport FlowToken from 0xFLOW_TOKEN_ADDRESS\nimport FIND from 0xFIND_ADDRESS\nimport Profile from 0xFIND_ADDRESS\n\n\n//really not sure on how to input links here.)\ntransaction(name: String) {\n\tprepare(acct: AuthAccount) {\n\t\t//if we do not have a profile it might be stored under a different address so we will just remove it\n\t\tlet profileCap = acct.getCapability<&{Profile.Public}>(Profile.publicPath)\n\t\tif !profileCap.check() {\n\t\t\tacct.unlink(Profile.publicPath)\n\t\t\tdestroy <- acct.load<@AnyResource>(from:Profile.storagePath)\n\t\t}\n\n\t\t//TODO we already have a profile\n\t\tif profileCap.check() {\n\t\t\treturn \n\t\t}\n\n\t\tlet profile <-Profile.createUser(name:name, createdAt: \"find\")\n\n\t\t//Add exising FUSD or create a new one and add it\n\t\tlet fusdReceiver = acct.getCapability<&{FungibleToken.Receiver}>(/public/fusdReceiver)\n\t\tif !fusdReceiver.check() {\n\t\t\tlet fusd <- FUSD.createEmptyVault()\n\t\t\tacct.save(<- fusd, to: /storage/fusdVault)\n\t\t\tacct.link<&FUSD.Vault{FungibleToken.Receiver}>( /public/fusdReceiver, target: /storage/fusdVault)\n\t\t\tacct.link<&FUSD.Vault{FungibleToken.Balance}>( /public/fusdBalance, target: /storage/fusdVault)\n\t\t}\n\n\t\tlet fusdWallet=Profile.Wallet(\n\t\t\tname:\"FUSD\", \n\t\t\treceiver:acct.getCapability<&{FungibleToken.Receiver}>(/public/fusdReceiver),\n\t\t\tbalance:acct.getCapability<&{FungibleToken.Balance}>(/public/fusdBalance),\n\t\t\taccept: Type<@FUSD.Vault>(),\n\t\t\tnames: [\"fusd\", \"stablecoin\"]\n\t\t)\n\n\t\tprofile.addWallet(fusdWallet)\n\n\n\t\tlet flowWallet=Profile.Wallet(\n\t\t\tname:\"Flow\", \n\t\t\treceiver:acct.getCapability<&{FungibleToken.Receiver}>(/public/flowTokenReceiver),\n\t\t\tbalance:acct.getCapability<&{FungibleToken.Balance}>(/public/flowTokenBalance),\n\t\t\taccept: Type<@FlowToken.Vault>(),\n\t\t\tnames: [\"flow\"]\n\t\t)\n\t\tprofile.addWallet(flowWallet)\n\t\tlet leaseCollection = acct.getCapability<&FIND.LeaseCollection{FIND.LeaseCollectionPublic}>(FIND.LeasePublicPath)\n\t\tif !leaseCollection.check() {\n\t\t\tacct.unlink(FIND.LeasePublicPath)\n\t\t\tdestroy <- acct.load<@AnyResource>(from:FIND.LeaseStoragePath)\n\t\t\tacct.save(<- FIND.createEmptyLeaseCollection(), to: FIND.LeaseStoragePath)\n\t\t\tacct.link<&FIND.LeaseCollection{FIND.LeaseCollectionPublic}>( FIND.LeasePublicPath, target: FIND.LeaseStoragePath)\n\t\t}\n\t\tprofile.addCollection(Profile.ResourceCollection(\"FINDLeases\",leaseCollection, Type<&FIND.LeaseCollection{FIND.LeaseCollectionPublic}>(), [\"find\", \"leases\"]))\n\n\t\tlet bidCollection = acct.getCapability<&FIND.BidCollection{FIND.BidCollectionPublic}>(FIND.BidPublicPath)\n\t\tif !bidCollection.check() {\n\t\t\tacct.unlink(FIND.BidPublicPath)\n\t\t\tdestroy <- acct.load<@AnyResource>(from:FIND.BidStoragePath)\n\t\t\tacct.save(<- FIND.createEmptyBidCollection(receiver: fusdReceiver, leases: leaseCollection), to: FIND.BidStoragePath)\n\t\t\tacct.link<&FIND.BidCollection{FIND.BidCollectionPublic}>( FIND.BidPublicPath, target: FIND.BidStoragePath)\n\t\t}\n\t\tprofile.addCollection(Profile.ResourceCollection( \"FINDBids\", bidCollection, Type<&FIND.BidCollection{FIND.BidCollectionPublic}>(), [\"find\", \"bids\"]))\n\n\t\tacct.save(<-profile, to: Profile.storagePath)\n\t\tacct.link<&Profile.User{Profile.Public}>(Profile.publicPath, target: Profile.storagePath)\n\t\tacct.link<&{FungibleToken.Receiver}>(Profile.publicReceiverPath, target: Profile.storagePath)\n\n\t}\n}\n\n",
+        "dependencies": {
+            "0xFUNGIBLE_TOKEN_ADDRESS": {
+                "FungibleToken": {
+                    "testnet": {
+                        "address": "0x9a0766d93b6608b7",
+                        "contract": "FungibleToken",
+                        "fq_address": "A.0x9a0766d93b6608b7.FungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138839814
+                    }
+                }
+            },
+            "0xFUSD_ADDRESS": {
+                "FUSD": {
+                    "testnet": {
+                        "address": "0xe223d8a629e49c68",
+                        "contract": "FUSD",
+                        "fq_address": "A.0xe223d8a629e49c68.FUSD",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 138839948
+                    }
+                }
+            },
+            "0xFLOW_TOKEN_ADDRESS": {
+                "FlowToken": {
+                    "testnet": {
+                        "address": "0x7e60df042a9c0868",
+                        "contract": "FlowToken",
+                        "fq_address": "A.0x7e60df042a9c0868.FlowToken",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 138839992
+                    }
+                }
+            },
+            "0xFIND_ADDRESS": {
+                "Profile": {
+                    "testnet": {
+                        "address": "0x37a05b1ecacc80f7",
+                        "contract": "Profile",
+                        "fq_address": "A.0x37a05b1ecacc80f7.Profile",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 138840117
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "name": {
+                "index": 0,
+                "type": "String",
+                "messages": {}
+            }
+        }
+    }
+}

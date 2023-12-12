@@ -1,0 +1,64 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "ea383bb0004febd853f21013afb412c22c243d34528e37e32c088596d3539e01",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "TheFootballClub Initialize account"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Initialize your account to buy, sell and receive NFTs"
+                }
+            }
+        },
+        "cadence": "import NonFungibleToken from 0xNON_FUNGIBLE_TOKEN_ADDRESS\nimport TFCItems from 0xTFC_ITEMS_ADDRESS\nimport NFTStorefront from 0xNFT_STOREFRONT_ADDRESS\n\n/*\n    Check if an account has a TFCItems Collection capability\n */\npub fun hasItems(_ address: Address): Bool {\n    return getAccount(address)\n    .getCapability<&TFCItems.Collection{NonFungibleToken.CollectionPublic, TFCItems.TFCItemsCollectionPublic}>(TFCItems.CollectionPublicPath)\n    .check()\n}\n/*\n    Check if an account has a storefront capability\n */\npub fun hasStorefont(_ address: Address): Bool {\n    return getAccount(address)\n    .getCapability<&NFTStorefront.Storefront{NFTStorefront.StorefrontPublic}>(NFTStorefront.StorefrontPublicPath)\n    .check()\n}\n\n/*\n    This transaction configures an account to hold TFC Items & an NFTStorefont\n */\ntransaction {\n    prepare(signer: AuthAccount) {\n    \n\n    // if a TFCItems collection is not created yet we make it.\n    if !hasItems(signer.address) {\n        if signer.borrow<&TFCItems.Collection>(from: TFCItems.CollectionStoragePath) == nil {\n            signer.save(<-TFCItems.createEmptyCollection(), to: TFCItems.CollectionStoragePath)\n            signer.unlink(TFCItems.CollectionPublicPath)\n            signer.link<&TFCItems.Collection{NonFungibleToken.CollectionPublic, TFCItems.TFCItemsCollectionPublic}>(TFCItems.CollectionPublicPath, target: TFCItems.CollectionStoragePath)\n        }\n    }\n\n    // if a NFTStorefront is not created yet we make it.\n    if !hasStorefont(signer.address) {\n        if signer.borrow<&NFTStorefront.Storefront>(from: NFTStorefront.StorefrontStoragePath) == nil {\n            let storefront <- NFTStorefront.createStorefront() as! @NFTStorefront.Storefront        \n            signer.save(<-storefront, to: NFTStorefront.StorefrontStoragePath)\n            signer.link<&NFTStorefront.Storefront{NFTStorefront.StorefrontPublic}>(NFTStorefront.StorefrontPublicPath, target: NFTStorefront.StorefrontStoragePath)\n        }\n    }\n\n    }\n}\n",
+        "dependencies": {
+            "0xNON_FUNGIBLE_TOKEN_ADDRESS": {
+                "NonFungibleToken": {
+                    "testnet": {
+                        "address": "0x631e88ae7f1d7c20",
+                        "contract": "NonFungibleToken",
+                        "fq_address": "A.0x631e88ae7f1d7c20.NonFungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138881127
+                    }
+                }
+            },
+            "0xTFC_ITEMS_ADDRESS": {
+                "TFCItems": {
+                    "testnet": {
+                        "address": "0x91a6217c3b70cae8",
+                        "contract": "TFCItems",
+                        "fq_address": "A.0x91a6217c3b70cae8.TFCItems",
+                        "pin": "9524cc8b5eb8bb8f7d8cf4ee3c65374cafa55921d31d6f72ce08d1c4da8aad57",
+                        "pin_block_height": 138881216
+                    }
+                }
+            },
+            "0xNFT_STOREFRONT_ADDRESS": {
+                "NFTStorefront": {
+                    "testnet": {
+                        "address": "0x94b06cfca1d8a476",
+                        "contract": "NFTStorefront",
+                        "fq_address": "A.0x94b06cfca1d8a476.NFTStorefront",
+                        "pin": "ba061d95016d5506e9f5d1afda15d82eb066aa8b0552e8b26dc7950fa5714d51",
+                        "pin_block_height": 138881273
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "address": {
+                "index": 0,
+                "type": "Address",
+                "messages": {}
+            }
+        }
+    }
+}

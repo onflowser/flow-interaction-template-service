@@ -1,0 +1,124 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "a233508c6e4c0b80e617aac6d3d6cb126022b8e1c29fbed9d44e5075890f90e2",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "Starly Accept sale offer with auto swap"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Purchase Starly NFT #{itemID} from {marketCollectionAddress}"
+                }
+            }
+        },
+        "cadence": "import FungibleToken from 0xFUNGIBLE_TOKEN_ADDRESS\nimport NonFungibleToken from 0xNON_FUNGIBLE_TOKEN_ADDRESS\nimport FlowToken from 0xFLOW_TOKEN_ADDRESS\nimport FUSD from 0xFUSD_ADDRESS\nimport FlowSwapPair from 0xFLOW_USDT_SWAP_ADDRESS\nimport FusdUsdtSwapPair from 0xFUSD_USDT_SWAP_ADDRESS\nimport StarlyCard from 0xSTARLY_CARD_ADDRESS\nimport StarlyCardMarket from 0xSTARLY_CARD_MARKET_ADDRESS\n\ntransaction(itemID: UInt64, marketCollectionAddress: Address) {\n    let paymentVault: @FungibleToken.Vault\n    let starlyCardCollection: &StarlyCard.Collection{NonFungibleToken.Receiver}\n    let marketCollection: &StarlyCardMarket.Collection{StarlyCardMarket.CollectionPublic}\n    let buyerAddress: Address\n\n    prepare(signer: AuthAccount) {\n        self.buyerAddress = signer.address;\n\n        self.starlyCardCollection = signer.borrow<&StarlyCard.Collection{NonFungibleToken.Receiver}>(\n            from: StarlyCard.CollectionStoragePath\n        ) ?? panic(\"Cannot borrow StarlyCard collection receiver from acct\")\n\n        self.marketCollection = getAccount(marketCollectionAddress)\n            .getCapability<&StarlyCardMarket.Collection{StarlyCardMarket.CollectionPublic}>(\n                StarlyCardMarket.CollectionPublicPath\n            )!\n            .borrow()\n            ?? panic(\"Could not borrow market collection from market address\")\n\n        let saleItem = self.marketCollection.borrowSaleItem(itemID: itemID)\n                    ?? panic(\"No item with that ID\")\n\n        let fusdPrice = saleItem.price\n\n        let amountUsdt = FusdUsdtSwapPair.quoteSwapToken2ForExactToken1(amount: fusdPrice)\n        let amountFlow = FlowSwapPair.quoteSwapToken1ForExactToken2(amount: amountUsdt) / (1.0 - FlowSwapPair.feePercentage) + 0.00001\n\n        // swap Flow to FUSD\n        let flowVault = signer.borrow<&FlowToken.Vault>(from: /storage/flowTokenVault)\n          ?? panic(\"Could not borrow a reference to Vault\")\n\n        let token1Vault <- flowVault.withdraw(amount: amountFlow) as! @FlowToken.Vault\n        let token2Vault <- FlowSwapPair.swapToken1ForToken2(from: <-token1Vault)\n        let token3Vault <- FusdUsdtSwapPair.swapToken2ForToken1(from: <-token2Vault)\n\n        if signer.borrow<&FUSD.Vault>(from: /storage/fusdVault) == nil {\n            // Create a new FUSD Vault and put it in storage\n            signer.save(<-FUSD.createEmptyVault(), to: /storage/fusdVault)\n\n            // Create a public capability to the Vault that only exposes\n            // the deposit function through the Receiver interface\n            signer.link<&FUSD.Vault{FungibleToken.Receiver}>(\n                /public/fusdReceiver,\n                target: /storage/fusdVault\n            )\n\n            // Create a public capability to the Vault that only exposes\n            // the balance field through the Balance interface\n            signer.link<&FUSD.Vault{FungibleToken.Balance}>(\n                /public/fusdBalance,\n                target: /storage/fusdVault\n            )\n        }\n\n        let fusdVault = signer.borrow<&FUSD.Vault>(from: /storage/fusdVault)\n            ?? panic(\"Could not borrow a reference to Vault\")\n\n        fusdVault.deposit(from: <- token3Vault)\n        self.paymentVault <- fusdVault.withdraw(amount: fusdPrice)\n    }\n\n    execute {\n        self.marketCollection.purchase(\n            itemID: itemID,\n            buyerCollection: self.starlyCardCollection,\n            buyerPayment: <- self.paymentVault,\n            buyerAddress: self.buyerAddress\n        )\n    }\n}\n",
+        "dependencies": {
+            "0xFUNGIBLE_TOKEN_ADDRESS": {
+                "FungibleToken": {
+                    "testnet": {
+                        "address": "0x9a0766d93b6608b7",
+                        "contract": "FungibleToken",
+                        "fq_address": "A.0x9a0766d93b6608b7.FungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138890794
+                    }
+                }
+            },
+            "0xNON_FUNGIBLE_TOKEN_ADDRESS": {
+                "NonFungibleToken": {
+                    "testnet": {
+                        "address": "0x631e88ae7f1d7c20",
+                        "contract": "NonFungibleToken",
+                        "fq_address": "A.0x631e88ae7f1d7c20.NonFungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138890828
+                    }
+                }
+            },
+            "0xFLOW_TOKEN_ADDRESS": {
+                "FlowToken": {
+                    "testnet": {
+                        "address": "0x7e60df042a9c0868",
+                        "contract": "FlowToken",
+                        "fq_address": "A.0x7e60df042a9c0868.FlowToken",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 138890835
+                    }
+                }
+            },
+            "0xFUSD_ADDRESS": {
+                "FUSD": {
+                    "testnet": {
+                        "address": "0xe223d8a629e49c68",
+                        "contract": "FUSD",
+                        "fq_address": "A.0xe223d8a629e49c68.FUSD",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 138890861
+                    }
+                }
+            },
+            "0xFLOW_USDT_SWAP_ADDRESS": {
+                "FlowSwapPair": {
+                    "testnet": {
+                        "address": "0xd9854329b7edf136",
+                        "contract": "FlowSwapPair",
+                        "fq_address": "A.0xd9854329b7edf136.FlowSwapPair",
+                        "pin": "9524cc8b5eb8bb8f7d8cf4ee3c65374cafa55921d31d6f72ce08d1c4da8aad57",
+                        "pin_block_height": 138890933
+                    }
+                }
+            },
+            "0xFUSD_USDT_SWAP_ADDRESS": {
+                "FusdUsdtSwapPair": {
+                    "testnet": {
+                        "address": "0x3502a5dacaf350bb",
+                        "contract": "FusdUsdtSwapPair",
+                        "fq_address": "A.0x3502a5dacaf350bb.FusdUsdtSwapPair",
+                        "pin": "9524cc8b5eb8bb8f7d8cf4ee3c65374cafa55921d31d6f72ce08d1c4da8aad57",
+                        "pin_block_height": 138891042
+                    }
+                }
+            },
+            "0xSTARLY_CARD_ADDRESS": {
+                "StarlyCard": {
+                    "testnet": {
+                        "address": "0x697d72a988a77070",
+                        "contract": "StarlyCard",
+                        "fq_address": "A.0x697d72a988a77070.StarlyCard",
+                        "pin": "455a9a9d9530fe73aeba8c3f857fce0ad33438592943e4b391a6b92418cce5e8",
+                        "pin_block_height": 138891252
+                    }
+                }
+            },
+            "0xSTARLY_CARD_MARKET_ADDRESS": {
+                "StarlyCardMarket": {
+                    "testnet": {
+                        "address": "0x697d72a988a77070",
+                        "contract": "StarlyCardMarket",
+                        "fq_address": "A.0x697d72a988a77070.StarlyCardMarket",
+                        "pin": "29a94f46acbcd90cca98bdd1bb3e1cbe84d2c9c51367f391fb9d94e352626daf",
+                        "pin_block_height": 138891523
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "itemID": {
+                "index": 0,
+                "type": "UInt64",
+                "messages": {}
+            },
+            "marketCollectionAddress": {
+                "index": 1,
+                "type": "Address",
+                "messages": {}
+            }
+        }
+    }
+}

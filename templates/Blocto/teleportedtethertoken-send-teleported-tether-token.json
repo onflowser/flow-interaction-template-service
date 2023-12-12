@@ -1,0 +1,60 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "5114a790cce1cc928f151b4d6fb9c3186b37dbe46491afdab9333bb19c607233",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "TeleportedTetherToken Send teleported tether token"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Send {amount} tUSDT to {to}",
+                    "zh-CN": "发送 {amount} tUSDT 代币至 {to}",
+                    "zh-TW": "發送 {amount} tUSDT 代幣至 {to}"
+                }
+            }
+        },
+        "cadence": "import FungibleToken from 0xFUNGIBLE_TOKEN_ADDRESS\nimport TeleportedTetherToken from 0xTELEPORTED_USDT_ADDRESS\n\ntransaction(amount: UFix64, to: Address) {\n\n    // The Vault resource that holds the tokens that are being transferred\n    let sentVault: @FungibleToken.Vault\n\n    prepare(signer: AuthAccount) {\n\n        // Get a reference to the signer's stored vault\n        let vaultRef = signer.borrow<&TeleportedTetherToken.Vault>(from: TeleportedTetherToken.TokenStoragePath)\n            ?? panic(\"Could not borrow reference to the owner's Vault!\")\n\n        // Withdraw tokens from the signer's stored vault\n        self.sentVault <- vaultRef.withdraw(amount: amount)\n    }\n\n    execute {\n\n        // Get the recipient's public account object\n        let recipient = getAccount(to)\n\n        // Get a reference to the recipient's Receiver\n        let receiverRef = recipient.getCapability(TeleportedTetherToken.TokenPublicReceiverPath)\n            .borrow<&{FungibleToken.Receiver}>()\n            ?? panic(\"Could not borrow receiver reference to the recipient's Vault\")\n\n        // Deposit the withdrawn tokens in the recipient's receiver\n        receiverRef.deposit(from: <-self.sentVault)\n    }\n}",
+        "dependencies": {
+            "0xFUNGIBLE_TOKEN_ADDRESS": {
+                "FungibleToken": {
+                    "testnet": {
+                        "address": "0x9a0766d93b6608b7",
+                        "contract": "FungibleToken",
+                        "fq_address": "A.0x9a0766d93b6608b7.FungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138840748
+                    }
+                }
+            },
+            "0xTELEPORTED_USDT_ADDRESS": {
+                "TeleportedTetherToken": {
+                    "testnet": {
+                        "address": "0xab26e0a07d770ec1",
+                        "contract": "TeleportedTetherToken",
+                        "fq_address": "A.0xab26e0a07d770ec1.TeleportedTetherToken",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 138880742
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "amount": {
+                "index": 0,
+                "type": "UFix64",
+                "messages": {}
+            },
+            "to": {
+                "index": 1,
+                "type": "Address",
+                "messages": {}
+            }
+        }
+    }
+}

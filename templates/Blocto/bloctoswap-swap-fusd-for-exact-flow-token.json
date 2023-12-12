@@ -1,0 +1,93 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "da1ebe9105f78103cbd5ba19a60c53bb1a3bc27e5878dd4e7e85a3273a6ee025",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "BloctoSwap Swap fusd for exact flow token"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Swap at most {maxAmountIn} FUSD for {amountOut} FLOW",
+                    "zh-CN": "将至多 {maxAmountIn} FUSD 兑换成 {amountOut} FLOW",
+                    "zh-TW": "將至多 {maxAmountIn} FUSD 兌換成 {amountOut} FLOW"
+                }
+            }
+        },
+        "cadence": "import FungibleToken from 0xFUNGIBLE_TOKEN_ADDRESS\nimport FUSD from 0xFUSD_ADDRESS\nimport FlowToken from 0xFLOW_TOKEN_ADDRESS\nimport FusdUsdtSwapPair from 0xFUSD_USDT_SWAP_ADDRESS\nimport FlowSwapPair from 0xFLOW_USDT_SWAP_ADDRESS\n\ntransaction(maxAmountIn: UFix64, amountOut: UFix64) {\n  prepare(signer: AuthAccount) {\n    let amount0 = FlowSwapPair.quoteSwapToken2ForExactToken1(amount: amountOut) / (1.0 - FlowSwapPair.getFeePercentage())\nlet amountIn = FusdUsdtSwapPair.quoteSwapToken1ForExactToken2(amount: amount0) / (1.0 - FusdUsdtSwapPair.getFeePercentage())\n    assert(amountIn <= maxAmountIn, message: \"Input amount too large\")\n\n    let fusdVault = signer.borrow<&FUSD.Vault>(from: /storage/fusdVault) \n      ?? panic(\"Could not borrow a reference to Vault\")\n\n    let token0Vault <- fusdVault.withdraw(amount: amountIn) as! @FUSD.Vault\n    let token1Vault <- FusdUsdtSwapPair.swapToken1ForToken2(from: <- token0Vault)\nlet token2Vault <- FlowSwapPair.swapToken2ForToken1(from: <- token1Vault)\n\n      if signer.borrow<&FlowToken.Vault>(from: /storage/flowTokenVault) == nil {\n    signer.save(<-FlowToken.createEmptyVault(), to: /storage/flowTokenVault)\n    signer.link<&FlowToken.Vault{FungibleToken.Receiver}>(\n      /public/flowTokenReceiver,\n      target: /storage/flowTokenVault\n    )\n    signer.link<&FlowToken.Vault{FungibleToken.Balance}>(\n      /public/flowTokenBalance,\n      target: /storage/flowTokenVault\n    )\n  }\n    let flowTokenVault = signer.borrow<&FlowToken.Vault>(from: /storage/flowTokenVault) \n      ?? panic(\"Could not borrow a reference to Vault\")\n\n    \n\n    flowTokenVault.deposit(from: <- token2Vault)\n  }\n}",
+        "dependencies": {
+            "0xFUNGIBLE_TOKEN_ADDRESS": {
+                "FungibleToken": {
+                    "testnet": {
+                        "address": "0x9a0766d93b6608b7",
+                        "contract": "FungibleToken",
+                        "fq_address": "A.0x9a0766d93b6608b7.FungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 139076188
+                    }
+                }
+            },
+            "0xFUSD_ADDRESS": {
+                "FUSD": {
+                    "testnet": {
+                        "address": "0xe223d8a629e49c68",
+                        "contract": "FUSD",
+                        "fq_address": "A.0xe223d8a629e49c68.FUSD",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 139076200
+                    }
+                }
+            },
+            "0xFLOW_TOKEN_ADDRESS": {
+                "FlowToken": {
+                    "testnet": {
+                        "address": "0x7e60df042a9c0868",
+                        "contract": "FlowToken",
+                        "fq_address": "A.0x7e60df042a9c0868.FlowToken",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 139076218
+                    }
+                }
+            },
+            "0xFUSD_USDT_SWAP_ADDRESS": {
+                "FusdUsdtSwapPair": {
+                    "testnet": {
+                        "address": "0x3502a5dacaf350bb",
+                        "contract": "FusdUsdtSwapPair",
+                        "fq_address": "A.0x3502a5dacaf350bb.FusdUsdtSwapPair",
+                        "pin": "9524cc8b5eb8bb8f7d8cf4ee3c65374cafa55921d31d6f72ce08d1c4da8aad57",
+                        "pin_block_height": 139076235
+                    }
+                }
+            },
+            "0xFLOW_USDT_SWAP_ADDRESS": {
+                "FlowSwapPair": {
+                    "testnet": {
+                        "address": "0xd9854329b7edf136",
+                        "contract": "FlowSwapPair",
+                        "fq_address": "A.0xd9854329b7edf136.FlowSwapPair",
+                        "pin": "9524cc8b5eb8bb8f7d8cf4ee3c65374cafa55921d31d6f72ce08d1c4da8aad57",
+                        "pin_block_height": 139076275
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "maxAmountIn": {
+                "index": 0,
+                "type": "UFix64",
+                "messages": {}
+            },
+            "amountOut": {
+                "index": 1,
+                "type": "UFix64",
+                "messages": {}
+            }
+        }
+    }
+}

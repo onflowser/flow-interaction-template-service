@@ -1,0 +1,42 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "735d355e9cfd01fb09e4f94051a3a2ddda1269ac2ae2b32c16adf13dadb6aa6e",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "Find Reject direct offer"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Reject the offer received on {name}"
+                }
+            }
+        },
+        "cadence": "import FIND from 0xFIND_ADDRESS\n\ntransaction(name: String) {\n\tprepare(account: AuthAccount) {\n\n\t\tlet finLeases= account.borrow<&FIND.LeaseCollection>(from:FIND.LeaseStoragePath)!\n\t\tfinLeases.cancel(name)\n\n\t}\n}\n\n",
+        "dependencies": {
+            "0xFIND_ADDRESS": {
+                "FIND": {
+                    "testnet": {
+                        "address": "0x37a05b1ecacc80f7",
+                        "contract": "FIND",
+                        "fq_address": "A.0x37a05b1ecacc80f7.FIND",
+                        "pin": "751fcffa1f40d4edff5f6cff49d14e6b67bbd33cad3d2dd61fdc04ce97db4a4a",
+                        "pin_block_height": 138840174
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "name": {
+                "index": 0,
+                "type": "String",
+                "messages": {}
+            }
+        }
+    }
+}

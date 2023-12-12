@@ -1,0 +1,55 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "0d0201f4bd75d9e29211f8b9555e003bc753e4487e95695dbf2e9a0fd1c867b6",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "FlowStaking Claim reward flow"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Claim staking reward: {amount} FLOW",
+                    "zh-CN": "领取质押奖励: {amount} FLOW 代币",
+                    "zh-TW": "領取質押獎勵: {amount} FLOW 代幣"
+                }
+            }
+        },
+        "cadence": "import LockedTokens from 0xLOCKED_TOKEN_ADDRESS\nimport FlowToken from 0xFLOW_TOKEN_ADDRESS\n\ntransaction(amount: UFix64) {\n  let nodeDelegatorProxy: LockedTokens.LockedNodeDelegatorProxy\n  let holderRef: &LockedTokens.TokenHolder\n  let vaultRef: &FlowToken.Vault\n\n  prepare(acct: AuthAccount) {\n    self.holderRef = acct.borrow<&LockedTokens.TokenHolder>(from: LockedTokens.TokenHolderStoragePath) \n      ?? panic(\"TokenHolder is not saved at specified path\")\n    \n    self.nodeDelegatorProxy = self.holderRef.borrowDelegator()\n\n    self.vaultRef = acct.borrow<&FlowToken.Vault>(from: /storage/flowTokenVault)\n      ?? panic(\"Could not borrow flow token vault ref\")\n  }\n\n  execute {\n    self.nodeDelegatorProxy.withdrawRewardedTokens(amount: amount)\n    self.vaultRef.deposit(from: <-self.holderRef.withdraw(amount: amount))\n  }\n}",
+        "dependencies": {
+            "0xLOCKED_TOKEN_ADDRESS": {
+                "LockedTokens": {
+                    "testnet": {
+                        "address": "0x95e019a17d0e23d7",
+                        "contract": "LockedTokens",
+                        "fq_address": "A.0x95e019a17d0e23d7.LockedTokens",
+                        "pin": "8c6baff06e290c032e1dabac5b99c800ef040b06bec84d351d03927c4daf7e75",
+                        "pin_block_height": 138839547
+                    }
+                }
+            },
+            "0xFLOW_TOKEN_ADDRESS": {
+                "FlowToken": {
+                    "testnet": {
+                        "address": "0x7e60df042a9c0868",
+                        "contract": "FlowToken",
+                        "fq_address": "A.0x7e60df042a9c0868.FlowToken",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 138839565
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "amount": {
+                "index": 0,
+                "type": "UFix64",
+                "messages": {}
+            }
+        }
+    }
+}

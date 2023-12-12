@@ -1,0 +1,47 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "ca903504a6397b24425a38989a85a0c3327392b050cea48ea8cc8789fe7a303f",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "mikoseanftv2 Batch create comment"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Create comment"
+                }
+            }
+        },
+        "cadence": "import MIKOSEANFTV2 from 0xMIKOSEA_MIKOSEANFTV2_ADDRESS\n\ntransaction(nftIDs: [UInt64], comment: String) {\n    let holder: &MIKOSEANFTV2.Collection\n\n    prepare(signer: AuthAccount) {\n        self.holder = signer.borrow<&MIKOSEANFTV2.Collection>(from: MIKOSEANFTV2.CollectionStoragePath) ?? panic(\"NOT_SETUP\")\n    }\n\n    execute {\n        for nftID in nftIDs {\n            self.holder.createComment(nftID: nftID, comment: comment)\n        }\n    }\n}",
+        "dependencies": {
+            "0xMIKOSEA_MIKOSEANFTV2_ADDRESS": {
+                "MIKOSEANFTV2": {
+                    "testnet": {
+                        "address": "0x713306ac51ac7ddb",
+                        "contract": "MIKOSEANFTV2",
+                        "fq_address": "A.0x713306ac51ac7ddb.MIKOSEANFTV2",
+                        "pin": "bfeedef4b4548a7bab30ecf31c97eb781c67f2414b4913d5bb19e58aeebbc515",
+                        "pin_block_height": 138900375
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "nftIDs": {
+                "index": 0,
+                "type": "UInt64",
+                "messages": {}
+            },
+            "comment": {
+                "index": 1,
+                "type": "String",
+                "messages": {}
+            }
+        }
+    }
+}

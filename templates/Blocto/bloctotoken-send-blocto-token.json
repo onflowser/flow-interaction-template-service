@@ -1,0 +1,60 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "6f379079833323643dbf093688a34564dba3c7c6ed7df1929e799917de959b07",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "BloctoToken Send blocto token"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Send {amount} BLT to {to}",
+                    "zh-CN": "发送 {amount} BLT 代币至 {to}",
+                    "zh-TW": "發送 {amount} BLT 代幣至 {to}"
+                }
+            }
+        },
+        "cadence": "import FungibleToken from 0xFUNGIBLE_TOKEN_ADDRESS\nimport BloctoToken from 0xBLOCTO_TOKEN_ADDRESS\n\ntransaction(amount: UFix64, to: Address) {\n    let sentVault: @FungibleToken.Vault\n    prepare(signer: AuthAccount) {\n        let vaultRef = signer.borrow<&BloctoToken.Vault>(from: /storage/bloctoTokenVault)\n            ?? panic(\"Could not borrow reference to the owner's Vault!\")\n        self.sentVault <- vaultRef.withdraw(amount: amount)\n    }\n\n    execute {\n        let recipient = getAccount(to)\n        let receiverRef = recipient.getCapability(/public/bloctoTokenReceiver)!.borrow<&{FungibleToken.Receiver}>()\n            ?? panic(\"Could not borrow receiver reference to the recipient's Vault\")\n        receiverRef.deposit(from: <-self.sentVault)\n    }\n}",
+        "dependencies": {
+            "0xFUNGIBLE_TOKEN_ADDRESS": {
+                "FungibleToken": {
+                    "testnet": {
+                        "address": "0x9a0766d93b6608b7",
+                        "contract": "FungibleToken",
+                        "fq_address": "A.0x9a0766d93b6608b7.FungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 139075532
+                    }
+                }
+            },
+            "0xBLOCTO_TOKEN_ADDRESS": {
+                "BloctoToken": {
+                    "testnet": {
+                        "address": "0x6e0797ac987005f5",
+                        "contract": "BloctoToken",
+                        "fq_address": "A.0x6e0797ac987005f5.BloctoToken",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 139075554
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "amount": {
+                "index": 0,
+                "type": "UFix64",
+                "messages": {}
+            },
+            "to": {
+                "index": 1,
+                "type": "Address",
+                "messages": {}
+            }
+        }
+    }
+}

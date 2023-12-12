@@ -1,0 +1,40 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "81bf77d49ef61c49ba4c483ee228504ee169fac9b320c3b0b56d91652a683deb",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "FanTop Transfer_token"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Transfer FanTop token.",
+                    "ja": "FanTopトークンをギフトします"
+                }
+            }
+        },
+        "cadence": "import FanTopToken from 0xFANTOP_ADDRESS\n\ntransaction(id: UInt64, to: Address) {\n  let transferToken: @FanTopToken.NFT\n\n  prepare(from: AuthAccount) {\n    let fromRef = from.borrow<&FanTopToken.Collection>(from: FanTopToken.collectionStoragePath)!\n    self.transferToken <- fromRef.withdraw(withdrawID: id) as! @FanTopToken.NFT\n  }\n\n  execute {\n    let toRef = getAccount(to).getCapability(FanTopToken.collectionPublicPath).borrow<&{FanTopToken.CollectionPublic}>()!\n    toRef.deposit(token: <- self.transferToken)\n  }\n}\n",
+        "dependencies": {
+            "0xFANTOP_ADDRESS": {
+                "FanTopToken": {}
+            }
+        },
+        "arguments": {
+            "id": {
+                "index": 0,
+                "type": "UInt64",
+                "messages": {}
+            },
+            "to": {
+                "index": 1,
+                "type": "Address",
+                "messages": {}
+            }
+        }
+    }
+}

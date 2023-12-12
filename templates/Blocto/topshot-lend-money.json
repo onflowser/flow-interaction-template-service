@@ -1,0 +1,70 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "905c8bc38563a0517376c75f3b95015d9f7dcbd1459e5c68ef5aba705c402d8e",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "TopShot Lend money"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Lend {LendAmount} FLOW tokens to {BorrowerAddress} borrower.",
+                    "zh-CN": "将 {LendAmount} FLOW 代币借给 {BorrowerAddress} 借方",
+                    "zh-TW": "將 {LendAmount} FLOW 代幣借給 {BorrowerAddress} 借方"
+                }
+            }
+        },
+        "cadence": "import NFTLendingPlace from 0xMANTLEFI_NFTLENDINGPLACE\nimport FlowToken from 0xFLOW_TOKEN_ADDRESS\n\n// Let the lender lend FLOW to borrower\ntransaction(BorrowerAddress: Address, LenderAddress: Address, Uuid: UInt64, LendAmount: UFix64) {\n\n    let temporaryVault: @FlowToken.Vault\n\n    let ticketRef:  &NFTLendingPlace.LenderTicket\n\n    prepare(acct: AuthAccount) {\n\n        // Init\n        if acct.borrow<&NFTLendingPlace.LenderTicket>(from: /storage/NFTLendingPlaceCollectionLenderTicket) == nil {\n            let lendingTicket <- NFTLendingPlace.createLenderTicket()\n            acct.save(<-lendingTicket, to: /storage/NFTLendingPlaceCollectionLenderTicket)\n        }\n\n        self.ticketRef = acct.borrow<&NFTLendingPlace.LenderTicket>(from: /storage/NFTLendingPlaceCollectionLenderTicket)\n            ?? panic(\"Could not borrow lender's LenderTicket reference\")\n\n        let vaultRef = acct.borrow<&FlowToken.Vault>(from: /storage/flowTokenVault)\n            ?? panic(\"Could not borrow lender's vault reference\")\n\n        self.temporaryVault <- vaultRef.withdraw(amount: LendAmount) as! @FlowToken.Vault\n    }\n\n    execute {\n\n        let borrower = getAccount(BorrowerAddress)\n\n        let lendingPlaceRef = borrower.getCapability<&AnyResource{NFTLendingPlace.LendingPublic}>(/public/NFTLendingPlaceCollection)\n            .borrow()\n            ?? panic(\"Could not borrow borrower's NFT Lending Place recource\")\n\n        lendingPlaceRef.lendOut(uuid: Uuid, recipient: LenderAddress, lendAmount: <-self.temporaryVault, ticket:  self.ticketRef)\n    }\n}\n",
+        "dependencies": {
+            "0xMANTLEFI_NFTLENDINGPLACE": {
+                "NFTLendingPlace": {
+                    "testnet": {
+                        "address": "0x615a6bf3445b9c61",
+                        "contract": "NFTLendingPlace",
+                        "fq_address": "A.0x615a6bf3445b9c61.NFTLendingPlace",
+                        "pin": "7723617b4999f66ce1942ee3847d899b74dca4b43ff6f7ce75f32c7d8b5b43a6",
+                        "pin_block_height": 138890244
+                    }
+                }
+            },
+            "0xFLOW_TOKEN_ADDRESS": {
+                "FlowToken": {
+                    "testnet": {
+                        "address": "0x7e60df042a9c0868",
+                        "contract": "FlowToken",
+                        "fq_address": "A.0x7e60df042a9c0868.FlowToken",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 138890276
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "BorrowerAddress": {
+                "index": 0,
+                "type": "Address",
+                "messages": {}
+            },
+            "LenderAddress": {
+                "index": 1,
+                "type": "Address",
+                "messages": {}
+            },
+            "Uuid": {
+                "index": 2,
+                "type": "UInt64",
+                "messages": {}
+            },
+            "LendAmount": {
+                "index": 3,
+                "type": "UFix64",
+                "messages": {}
+            }
+        }
+    }
+}

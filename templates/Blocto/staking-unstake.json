@@ -1,0 +1,75 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "1c61b988f65b271f33b49dde0fe26fe3a9d64cdf9b17b689cc4bca31da539e56",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "staking Unstake"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Unstake stake #{stakeID}"
+                }
+            }
+        },
+        "cadence": "import FungibleToken from 0xFUNGIBLE_TOKEN_ADDRESS\nimport NonFungibleToken from 0xNON_FUNGIBLE_TOKEN_ADDRESS\nimport StarlyToken from 0xSTARLY_TOKEN_ADDRESS\nimport StarlyTokenStaking from 0xSTARLY_TOKEN_STAKING_ADDRESS\n\ntransaction(stakeID: UInt64) {\n    let vaultRef: &StarlyToken.Vault\n    let stakeCollectionRef: &StarlyTokenStaking.Collection\n\n    prepare(acct: AuthAccount) {\n        self.vaultRef = acct.borrow<&StarlyToken.Vault>(from: StarlyToken.TokenStoragePath)\n            ?? panic(\"Could not borrow reference to the owner's StarlyToken vault!\")\n\n        self.stakeCollectionRef = acct.borrow<&StarlyTokenStaking.Collection>(from: StarlyTokenStaking.CollectionStoragePath)\n            ?? panic(\"Could not borrow reference to the owner's StarlyTokenStaking collection!\")\n    }\n\n    execute {\n        self.vaultRef.deposit(from: <-self.stakeCollectionRef.unstake(id: stakeID))\n    }\n}\n",
+        "dependencies": {
+            "0xFUNGIBLE_TOKEN_ADDRESS": {
+                "FungibleToken": {
+                    "testnet": {
+                        "address": "0x9a0766d93b6608b7",
+                        "contract": "FungibleToken",
+                        "fq_address": "A.0x9a0766d93b6608b7.FungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138898006
+                    }
+                }
+            },
+            "0xNON_FUNGIBLE_TOKEN_ADDRESS": {
+                "NonFungibleToken": {
+                    "testnet": {
+                        "address": "0x631e88ae7f1d7c20",
+                        "contract": "NonFungibleToken",
+                        "fq_address": "A.0x631e88ae7f1d7c20.NonFungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138898045
+                    }
+                }
+            },
+            "0xSTARLY_TOKEN_ADDRESS": {
+                "StarlyToken": {
+                    "testnet": {
+                        "address": "0xf63219072aaddd50",
+                        "contract": "StarlyToken",
+                        "fq_address": "A.0xf63219072aaddd50.StarlyToken",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 138898083
+                    }
+                }
+            },
+            "0xSTARLY_TOKEN_STAKING_ADDRESS": {
+                "StarlyTokenStaking": {
+                    "testnet": {
+                        "address": "0x8d1cf508d398c5c2",
+                        "contract": "StarlyTokenStaking",
+                        "fq_address": "A.0x8d1cf508d398c5c2.StarlyTokenStaking",
+                        "pin": "751fcffa1f40d4edff5f6cff49d14e6b67bbd33cad3d2dd61fdc04ce97db4a4a",
+                        "pin_block_height": 138898213
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "stakeID": {
+                "index": 0,
+                "type": "UInt64",
+                "messages": {}
+            }
+        }
+    }
+}

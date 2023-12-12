@@ -1,0 +1,109 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "1b5b84ce7a8bce673342e7f32306ace5967a7406b950cc4d91733c7a2de12332",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "FlowStaking Enable flow stake"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Enable staking: {amount} FLOW",
+                    "zh-CN": "启用质押: {amount} FLOW 代币",
+                    "zh-TW": "啟用質押: {amount} FLOW 代幣"
+                }
+            }
+        },
+        "cadence": "import FungibleToken from 0xFUNGIBLE_TOKEN_ADDRESS\nimport LockedTokens from 0xLOCKED_TOKEN_ADDRESS\nimport FlowToken from 0xFLOW_TOKEN_ADDRESS\nimport FlowStorageFees from 0xFLOW_STORAGE_FEES_ADDRESS\nimport BloctoStorageRent from 0xBLOCTO_STORAGE_RENT_ADDRESS\nimport FlowIDTableStaking from 0xFLOW_ID_TABLE_STAKING_ADDRESS\n\ntransaction(id: String, amount: UFix64, cosignerPubKey: String) {\n\n  let holderRef: &LockedTokens.TokenHolder\n  \n  let vaultRef: &FlowToken.Vault\n\n  prepare(custodyProvider: AuthAccount, userAccount: AuthAccount) {\n\n    let sharedAccount = AuthAccount(payer: custodyProvider)\n\n    // Add a key\n    sharedAccount.keys.add(\n      publicKey: PublicKey(\n          publicKey: cosignerPubKey.decodeHex(),\n          signatureAlgorithm: SignatureAlgorithm.ECDSA_secp256k1\n      ),\n      hashAlgorithm: HashAlgorithm.SHA3_256,\n      weight: 1000.0\n    )\n\n    let vaultCapability = sharedAccount.link<&FlowToken.Vault>(\n      /private/flowTokenVault, \n      target: /storage/flowTokenVault\n    ) ?? panic(\"Could not link Flow Token Vault capability\")\n\n    let lockedTokenManager <- LockedTokens.createLockedTokenManager(vault: vaultCapability)\n\n    sharedAccount.save(<-lockedTokenManager, to: LockedTokens.LockedTokenManagerStoragePath)\n\n    let tokenManagerCapability = sharedAccount.link<&LockedTokens.LockedTokenManager>(\n      LockedTokens.LockedTokenManagerPrivatePath, \n      target: LockedTokens.LockedTokenManagerStoragePath\n    ) ?? panic(\"Could not link token manager capability\")\n\n    let tokenHolder <- LockedTokens.createTokenHolder(\n      lockedAddress: sharedAccount.address, \n      tokenManager: tokenManagerCapability\n    )\n\n    userAccount.save(<-tokenHolder, to: LockedTokens.TokenHolderStoragePath)\n\n    userAccount.link<&LockedTokens.TokenHolder{LockedTokens.LockedAccountInfo}>(\n      LockedTokens.LockedAccountInfoPublicPath, \n      target: LockedTokens.TokenHolderStoragePath\n    )\n\n    let tokenAdminCapability = sharedAccount.link<&LockedTokens.LockedTokenManager>(\n      LockedTokens.LockedTokenAdminPrivatePath, \n      target: LockedTokens.LockedTokenManagerStoragePath\n    ) ?? panic(\"Could not link token custodyProvider to token manager\")\n\n    let lockedAccountCreator = custodyProvider.borrow<&LockedTokens.LockedAccountCreator>(\n      from: LockedTokens.LockedAccountCreatorStoragePath\n    ) ?? panic(\"Could not borrow reference to LockedAccountCreator\")\n\n    lockedAccountCreator.addAccount(\n      sharedAccountAddress: sharedAccount.address, \n      unlockedAccountAddress: userAccount.address, \n      tokenAdmin: tokenAdminCapability\n    )\n\n    // Override the default FlowToken receiver\n    sharedAccount.unlink(/public/flowTokenReceiver)\n\n    // create new receiver that marks received tokens as unlocked\n    sharedAccount.link<&AnyResource{FungibleToken.Receiver}>(\n      /public/flowTokenReceiver, \n      target: LockedTokens.LockedTokenManagerStoragePath\n    )\n\n    // pub normal receiver in a separate unique path\n    sharedAccount.link<&AnyResource{FungibleToken.Receiver}>(\n      /public/lockedFlowTokenReceiver, \n      target: /storage/flowTokenVault\n    )\n\n    BloctoStorageRent.tryRefill(custodyProvider.address)\n    BloctoStorageRent.tryRefill(userAccount.address)\n\n    self.holderRef = userAccount.borrow<&LockedTokens.TokenHolder>(\n      from: LockedTokens.TokenHolderStoragePath\n    ) ?? panic(\"TokenHolder is not saved at specified path\")\n    \n    self.vaultRef = userAccount.borrow<&FlowToken.Vault>(\n      from: /storage/flowTokenVault\n    ) ?? panic(\"Could not borrow flow token vault reference\")\n  }\n\n  execute {\n    let lockedBalance = self.holderRef.getLockedAccountBalance()\n\n    if amount <= lockedBalance {\n      self.holderRef.createNodeDelegator(nodeID: id)\n      let stakerProxy = self.holderRef.borrowDelegator()\n      stakerProxy.delegateNewTokens(amount: amount - FlowIDTableStaking.getDelegatorMinimumStakeRequirement())\n    } else if ((amount - lockedBalance) <= (self.vaultRef.balance - FlowStorageFees.minimumStorageReservation)) {\n      self.holderRef.deposit(from: <-self.vaultRef.withdraw(amount: amount - lockedBalance))\n      self.holderRef.createNodeDelegator(nodeID: id)\n      let stakerProxy = self.holderRef.borrowDelegator()\n      stakerProxy.delegateNewTokens(amount: amount - FlowIDTableStaking.getDelegatorMinimumStakeRequirement())\n    } else {\n      panic(\"Not enough tokens to stake!\")\n    }\n  }\n}",
+        "dependencies": {
+            "0xFUNGIBLE_TOKEN_ADDRESS": {
+                "FungibleToken": {
+                    "testnet": {
+                        "address": "0x9a0766d93b6608b7",
+                        "contract": "FungibleToken",
+                        "fq_address": "A.0x9a0766d93b6608b7.FungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138839387
+                    }
+                }
+            },
+            "0xLOCKED_TOKEN_ADDRESS": {
+                "LockedTokens": {
+                    "testnet": {
+                        "address": "0x95e019a17d0e23d7",
+                        "contract": "LockedTokens",
+                        "fq_address": "A.0x95e019a17d0e23d7.LockedTokens",
+                        "pin": "8c6baff06e290c032e1dabac5b99c800ef040b06bec84d351d03927c4daf7e75",
+                        "pin_block_height": 138839583
+                    }
+                }
+            },
+            "0xFLOW_TOKEN_ADDRESS": {
+                "FlowToken": {
+                    "testnet": {
+                        "address": "0x7e60df042a9c0868",
+                        "contract": "FlowToken",
+                        "fq_address": "A.0x7e60df042a9c0868.FlowToken",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 138839623
+                    }
+                }
+            },
+            "0xFLOW_STORAGE_FEES_ADDRESS": {
+                "FlowStorageFees": {
+                    "testnet": {
+                        "address": "0x8c5303eaa26202d6",
+                        "contract": "FlowStorageFees",
+                        "fq_address": "A.0x8c5303eaa26202d6.FlowStorageFees",
+                        "pin": "ec7be5050256b8b9ab2a6f5550a42b6a64627fa7e684a88de5dd767864f0471a",
+                        "pin_block_height": 138839693
+                    }
+                }
+            },
+            "0xBLOCTO_STORAGE_RENT_ADDRESS": {
+                "BloctoStorageRent": {
+                    "testnet": {
+                        "address": "0xe563b9f8c70ab608",
+                        "contract": "BloctoStorageRent",
+                        "fq_address": "A.0xe563b9f8c70ab608.BloctoStorageRent",
+                        "pin": "9524cc8b5eb8bb8f7d8cf4ee3c65374cafa55921d31d6f72ce08d1c4da8aad57",
+                        "pin_block_height": 138839731
+                    }
+                }
+            },
+            "0xFLOW_ID_TABLE_STAKING_ADDRESS": {
+                "FlowIDTableStaking": {
+                    "testnet": {
+                        "address": "0x9eca2b38b18b5dfe",
+                        "contract": "FlowIDTableStaking",
+                        "fq_address": "A.0x9eca2b38b18b5dfe.FlowIDTableStaking",
+                        "pin": "36de04e524c1ae3d1ff6f87448f31576e302f6402d9505aed5ef3c9ca295b0de",
+                        "pin_block_height": 138839853
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "id": {
+                "index": 0,
+                "type": "String",
+                "messages": {}
+            },
+            "amount": {
+                "index": 1,
+                "type": "UFix64",
+                "messages": {}
+            },
+            "cosignerPubKey": {
+                "index": 2,
+                "type": "String",
+                "messages": {}
+            }
+        }
+    }
+}

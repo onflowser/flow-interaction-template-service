@@ -1,0 +1,105 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "abceec7c6efc86df3072c965e98ac2f821836f8b319f505f3337b4ad0f0e124f",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "Starly Buy pack"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Purchase Starly pack(s) for {price} FUSD"
+                }
+            }
+        },
+        "cadence": "import FungibleToken from 0xFUNGIBLE_TOKEN_ADDRESS\nimport FUSD from 0xFUSD_ADDRESS\nimport StarlyCardMarket from 0xSTARLY_CARD_MARKET_ADDRESS\nimport StarlyPack from 0xSTARLY_PACK_ADDRESS\n\ntransaction(\n    collectionID: String,\n    packIDs: [String],\n    price: UFix64,\n    beneficiaryAddress: Address,\n    beneficiaryCutPercent: UFix64,\n    creatorAddress: Address,\n    creatorCutPercent: UFix64) {\n\n    let paymentVault: @FungibleToken.Vault\n    let beneficiaryFUSDVault: Capability<&FUSD.Vault{FungibleToken.Receiver}>\n    let creatorFUSDVault: Capability<&FUSD.Vault{FungibleToken.Receiver}>\n    let buyerAddress: Address\n\n    prepare(signer: AuthAccount) {\n        self.buyerAddress = signer.address;\n        let buyerFUSDVault = signer.borrow<&FUSD.Vault>(from: /storage/fusdVault)\n            ?? panic(\"Cannot borrow FUSD vault from acct storage\")\n        self.paymentVault <- buyerFUSDVault.withdraw(amount: price)\n\n        let beneficiary = getAccount(beneficiaryAddress);\n        self.beneficiaryFUSDVault = beneficiary.getCapability<&FUSD.Vault{FungibleToken.Receiver}>(/public/fusdReceiver)!\n        assert(self.beneficiaryFUSDVault.borrow() != nil, message: \"Missing or mis-typed FUSD receiver (beneficiary)\")\n\n        let creator = getAccount(creatorAddress)\n        self.creatorFUSDVault = creator.getCapability<&FUSD.Vault{FungibleToken.Receiver}>(/public/fusdReceiver)!\n        assert(self.creatorFUSDVault.borrow() != nil, message: \"Missing or mis-typed FUSD receiver (creator)\")\n    }\n\n    execute {\n        StarlyPack.purchase(\n            collectionID: collectionID,\n            packIDs: packIDs,\n            price: price,\n            buyerAddress: self.buyerAddress,\n            paymentVault: <- self.paymentVault,\n            beneficiarySaleCutReceiver: StarlyCardMarket.SaleCutReceiver(\n                receiver: self.beneficiaryFUSDVault,\n                percent: beneficiaryCutPercent),\n            creatorSaleCutReceiver: StarlyCardMarket.SaleCutReceiver(\n                receiver: self.creatorFUSDVault,\n                percent: creatorCutPercent),\n            additionalSaleCutReceivers: [])\n    }\n}\n",
+        "dependencies": {
+            "0xFUNGIBLE_TOKEN_ADDRESS": {
+                "FungibleToken": {
+                    "testnet": {
+                        "address": "0x9a0766d93b6608b7",
+                        "contract": "FungibleToken",
+                        "fq_address": "A.0x9a0766d93b6608b7.FungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138890868
+                    }
+                }
+            },
+            "0xFUSD_ADDRESS": {
+                "FUSD": {
+                    "testnet": {
+                        "address": "0xe223d8a629e49c68",
+                        "contract": "FUSD",
+                        "fq_address": "A.0xe223d8a629e49c68.FUSD",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 138890918
+                    }
+                }
+            },
+            "0xSTARLY_CARD_MARKET_ADDRESS": {
+                "StarlyCardMarket": {
+                    "testnet": {
+                        "address": "0x697d72a988a77070",
+                        "contract": "StarlyCardMarket",
+                        "fq_address": "A.0x697d72a988a77070.StarlyCardMarket",
+                        "pin": "29a94f46acbcd90cca98bdd1bb3e1cbe84d2c9c51367f391fb9d94e352626daf",
+                        "pin_block_height": 138891190
+                    }
+                }
+            },
+            "0xSTARLY_PACK_ADDRESS": {
+                "StarlyPack": {
+                    "testnet": {
+                        "address": "0x697d72a988a77070",
+                        "contract": "StarlyPack",
+                        "fq_address": "A.0x697d72a988a77070.StarlyPack",
+                        "pin": "c5628184f286614e9f69b3101cef7b988fc42736f51907afdc62a0ca2d829574",
+                        "pin_block_height": 138891512
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "collectionID": {
+                "index": 0,
+                "type": "String",
+                "messages": {}
+            },
+            "packIDs": {
+                "index": 1,
+                "type": "String",
+                "messages": {}
+            },
+            "price": {
+                "index": 2,
+                "type": "UFix64",
+                "messages": {}
+            },
+            "beneficiaryAddress": {
+                "index": 3,
+                "type": "Address",
+                "messages": {}
+            },
+            "beneficiaryCutPercent": {
+                "index": 4,
+                "type": "UFix64",
+                "messages": {}
+            },
+            "creatorAddress": {
+                "index": 5,
+                "type": "Address",
+                "messages": {}
+            },
+            "creatorCutPercent": {
+                "index": 6,
+                "type": "UFix64",
+                "messages": {}
+            }
+        }
+    }
+}
