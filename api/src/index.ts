@@ -7,6 +7,7 @@ import { getConfig } from "./config";
 import initDB from "./db";
 import { TemplateService } from "./services/template";
 import * as cron from "cron";
+import {AuditService} from "./services/audit";
 
 const argv = yargs(hideBin(process.argv)).argv;
 const DEV = argv.dev;
@@ -52,6 +53,7 @@ async function run() {
   const startAPIServer = async () => {
     console.log("Starting API server ....");
     const templateService = new TemplateService(config);
+    const auditService = new AuditService();
 
     console.log("...Seeding TemplateService...");
     await templateService.seed();
@@ -78,7 +80,7 @@ async function run() {
       ? JSON.parse(fs.readFileSync(config.namesJsonFile, "utf8"))
       : {};
 
-    const app = initApp(templateService, auditorsJSONFile, namesJSONFile);
+    const app = initApp(templateService, auditService, auditorsJSONFile, namesJSONFile);
 
     app.listen(config.port, () => {
       console.log(`Listening on port ${config.port}!`);
