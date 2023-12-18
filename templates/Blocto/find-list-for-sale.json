@@ -1,0 +1,47 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "b09d98ee55696dd8ffb317bea1e7c58289df633c4a0c9f4f3a55144b60d4e874",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "Find List for sale"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "List name {name} for direct sale at {directSellPrice} FUSD"
+                }
+            }
+        },
+        "cadence": "import FIND from 0xFIND_ADDRESS\n\ntransaction(name: String, directSellPrice:UFix64) {\n\tprepare(acct: AuthAccount) {\n\t\tlet finLeases= acct.borrow<&FIND.LeaseCollection>(from:FIND.LeaseStoragePath)!\n\t\tfinLeases.listForSale(name: name,  directSellPrice:directSellPrice)\n\t}\n}\n\n",
+        "dependencies": {
+            "0xFIND_ADDRESS": {
+                "FIND": {
+                    "testnet": {
+                        "address": "0x37a05b1ecacc80f7",
+                        "contract": "FIND",
+                        "fq_address": "A.0x37a05b1ecacc80f7.FIND",
+                        "pin": "751fcffa1f40d4edff5f6cff49d14e6b67bbd33cad3d2dd61fdc04ce97db4a4a",
+                        "pin_block_height": 138840172
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "name": {
+                "index": 0,
+                "type": "String",
+                "messages": {}
+            },
+            "directSellPrice": {
+                "index": 1,
+                "type": "UFix64",
+                "messages": {}
+            }
+        }
+    }
+}

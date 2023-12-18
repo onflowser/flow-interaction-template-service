@@ -1,0 +1,113 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "918da4f4f8041b6de04b20d42fcf887c2821959bedbf3e2d62df00220ebc588d",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "Starly Accept sale offer v2"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Purchase Starly NFT #{itemID} from {marketCollectionAddress}"
+                }
+            }
+        },
+        "cadence": "import FungibleToken from 0xFUNGIBLE_TOKEN_ADDRESS\nimport NonFungibleToken from 0xNON_FUNGIBLE_TOKEN_ADDRESS\nimport FlowStorageFees from 0xFLOW_STORAGE_FEES_ADDRESS\nimport FUSD from 0xFUSD_ADDRESS\nimport FlowToken from 0xFLOW_TOKEN_ADDRESS\nimport StarlyCard from 0xSTARLY_CARD_ADDRESS\nimport StarlyCardMarket from 0xSTARLY_CARD_MARKET_ADDRESS\n\ntransaction(itemID: UInt64, marketCollectionAddress: Address) {\n    prepare(signer: AuthAccount, admin: AuthAccount) {\n        let marketCollection = getAccount(marketCollectionAddress)\n            .getCapability<&StarlyCardMarket.Collection{StarlyCardMarket.CollectionPublic}>(\n                StarlyCardMarket.CollectionPublicPath\n            )!\n            .borrow()\n            ?? panic(\"Could not borrow market collection from market address\")\n\n        let saleItem = marketCollection.borrowSaleItem(itemID: itemID)\n                    ?? panic(\"No item with that ID\")\n        let price = saleItem.price\n\n        let mainFUSDVault = signer.borrow<&FUSD.Vault>(from: /storage/fusdVault)\n            ?? panic(\"Cannot borrow FUSD vault from acct storage\")\n        let paymentVault <- mainFUSDVault.withdraw(amount: price)\n\n        let starlyCardCollection = signer.borrow<&StarlyCard.Collection{NonFungibleToken.Receiver}>(\n            from: StarlyCard.CollectionStoragePath\n        ) ?? panic(\"Cannot borrow StarlyCard collection receiver from acct\")\n\n        marketCollection.purchase(\n            itemID: itemID,\n            buyerCollection: starlyCardCollection,\n            buyerPayment: <- paymentVault,\n            buyerAddress: signer.address\n        )\n\n        fun returnFlowFromStorage(_ storage: UInt64): UFix64 {\n            let f = UFix64(storage % 100000000 as UInt64) * 0.00000001 as UFix64 + UFix64(storage / 100000000 as UInt64)\n            let storageMb = f * 100.0 as UFix64\n            let storage = FlowStorageFees.storageCapacityToFlow(storageMb)\n            return storage\n        }\n\n        var storageUsed = returnFlowFromStorage(signer.storageUsed)\n        var storageTotal = returnFlowFromStorage(signer.storageCapacity)\n        if (storageUsed > storageTotal) {\n            let difference = storageUsed - storageTotal\n            let vaultRef = admin.borrow<&FlowToken.Vault>(from: /storage/flowTokenVault)\n                ?? panic(\"Could not borrow reference to the admin's Vault!\")\n            let sentVault <- vaultRef.withdraw(amount: difference)\n            let receiver = signer.getCapability(/public/flowTokenReceiver).borrow<&{FungibleToken.Receiver}>()\n                ?? panic(\"failed to borrow reference to recipient vault\")\n            receiver.deposit(from: <-sentVault)\n        }\n    }\n}\n",
+        "dependencies": {
+            "0xFUNGIBLE_TOKEN_ADDRESS": {
+                "FungibleToken": {
+                    "testnet": {
+                        "address": "0x9a0766d93b6608b7",
+                        "contract": "FungibleToken",
+                        "fq_address": "A.0x9a0766d93b6608b7.FungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138890791
+                    }
+                }
+            },
+            "0xNON_FUNGIBLE_TOKEN_ADDRESS": {
+                "NonFungibleToken": {
+                    "testnet": {
+                        "address": "0x631e88ae7f1d7c20",
+                        "contract": "NonFungibleToken",
+                        "fq_address": "A.0x631e88ae7f1d7c20.NonFungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138890828
+                    }
+                }
+            },
+            "0xFLOW_STORAGE_FEES_ADDRESS": {
+                "FlowStorageFees": {
+                    "testnet": {
+                        "address": "0x8c5303eaa26202d6",
+                        "contract": "FlowStorageFees",
+                        "fq_address": "A.0x8c5303eaa26202d6.FlowStorageFees",
+                        "pin": "ec7be5050256b8b9ab2a6f5550a42b6a64627fa7e684a88de5dd767864f0471a",
+                        "pin_block_height": 138890860
+                    }
+                }
+            },
+            "0xFUSD_ADDRESS": {
+                "FUSD": {
+                    "testnet": {
+                        "address": "0xe223d8a629e49c68",
+                        "contract": "FUSD",
+                        "fq_address": "A.0xe223d8a629e49c68.FUSD",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 138890890
+                    }
+                }
+            },
+            "0xFLOW_TOKEN_ADDRESS": {
+                "FlowToken": {
+                    "testnet": {
+                        "address": "0x7e60df042a9c0868",
+                        "contract": "FlowToken",
+                        "fq_address": "A.0x7e60df042a9c0868.FlowToken",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 138890926
+                    }
+                }
+            },
+            "0xSTARLY_CARD_ADDRESS": {
+                "StarlyCard": {
+                    "testnet": {
+                        "address": "0x697d72a988a77070",
+                        "contract": "StarlyCard",
+                        "fq_address": "A.0x697d72a988a77070.StarlyCard",
+                        "pin": "455a9a9d9530fe73aeba8c3f857fce0ad33438592943e4b391a6b92418cce5e8",
+                        "pin_block_height": 138891139
+                    }
+                }
+            },
+            "0xSTARLY_CARD_MARKET_ADDRESS": {
+                "StarlyCardMarket": {
+                    "testnet": {
+                        "address": "0x697d72a988a77070",
+                        "contract": "StarlyCardMarket",
+                        "fq_address": "A.0x697d72a988a77070.StarlyCardMarket",
+                        "pin": "29a94f46acbcd90cca98bdd1bb3e1cbe84d2c9c51367f391fb9d94e352626daf",
+                        "pin_block_height": 138891423
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "itemID": {
+                "index": 0,
+                "type": "UInt64",
+                "messages": {}
+            },
+            "marketCollectionAddress": {
+                "index": 1,
+                "type": "Address",
+                "messages": {}
+            }
+        }
+    }
+}

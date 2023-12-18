@@ -1,0 +1,92 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "33499eb0d6ce6391c3e47c96cdbcbf99c1826c54f27ff4d01d71d40d9c070fc9",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "Mynft Borrow money by nft"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Lend NFT {id} in {baseAmount} FLOW tokens.",
+                    "zh-CN": "以 {baseAmount} FLOW 代币出借 NFT {id}",
+                    "zh-TW": "以 {baseAmount} FLOW 代幣出借 NFT {id}"
+                }
+            }
+        },
+        "cadence": "import FungibleToken from 0xFUNGIBLE_TOKEN_ADDRESS\nimport NonFungibleToken from 0xNON_FUNGIBLE_TOKEN_ADDRESS\nimport NFTLendingPlace from 0xMANTLEFI_NFTLENDINGPLACE\nimport FlowToken from 0xFLOW_TOKEN_ADDRESS\n\n// List an NFT in the account storage for lending\ntransaction(id: UInt64, baseAmount: UFix64, interest: UFix64, duration: UFix64) {\n\n    prepare(acct: AuthAccount) {\n\n        // Init\n        if acct.borrow<&AnyResource{NFTLendingPlace.LendingPublic}>(from: /storage/NFTLendingPlaceCollection) == nil {\n            let receiver = acct.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver)\n            let lendingPlace <- NFTLendingPlace.createLendingCollection(ownerVault: receiver)\n            acct.save(<-lendingPlace, to: /storage/NFTLendingPlaceCollection)\n            acct.link<&NFTLendingPlace.LendingCollection{NFTLendingPlace.LendingPublic}>(/public/NFTLendingPlaceCollection, target: /storage/NFTLendingPlaceCollection)\n        }\n\n        let lendingPlace = acct.borrow<&NFTLendingPlace.LendingCollection>(from: /storage/NFTLendingPlaceCollection)\n            ?? panic(\"Could not borrow borrower's NFT Lending Place resource\")\n\n        let collectionRef = acct.borrow<&NonFungibleToken.Collection>(from: /storage/MynftCollection)\n            ?? panic(\"Could not borrow borrower's NFT collection resource\")\n\n        // Withdraw the NFT to use as collateral\n        let token <- collectionRef.withdraw(withdrawID: id)\n\n        // List the NFT as collateral\n        lendingPlace.listForLending(owner: acct.address, token: <-token, baseAmount: baseAmount, interest: interest, duration: duration)\n    }\n}\n",
+        "dependencies": {
+            "0xFUNGIBLE_TOKEN_ADDRESS": {
+                "FungibleToken": {
+                    "testnet": {
+                        "address": "0x9a0766d93b6608b7",
+                        "contract": "FungibleToken",
+                        "fq_address": "A.0x9a0766d93b6608b7.FungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138889551
+                    }
+                }
+            },
+            "0xNON_FUNGIBLE_TOKEN_ADDRESS": {
+                "NonFungibleToken": {
+                    "testnet": {
+                        "address": "0x631e88ae7f1d7c20",
+                        "contract": "NonFungibleToken",
+                        "fq_address": "A.0x631e88ae7f1d7c20.NonFungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138889575
+                    }
+                }
+            },
+            "0xMANTLEFI_NFTLENDINGPLACE": {
+                "NFTLendingPlace": {
+                    "testnet": {
+                        "address": "0x615a6bf3445b9c61",
+                        "contract": "NFTLendingPlace",
+                        "fq_address": "A.0x615a6bf3445b9c61.NFTLendingPlace",
+                        "pin": "7723617b4999f66ce1942ee3847d899b74dca4b43ff6f7ce75f32c7d8b5b43a6",
+                        "pin_block_height": 138889646
+                    }
+                }
+            },
+            "0xFLOW_TOKEN_ADDRESS": {
+                "FlowToken": {
+                    "testnet": {
+                        "address": "0x7e60df042a9c0868",
+                        "contract": "FlowToken",
+                        "fq_address": "A.0x7e60df042a9c0868.FlowToken",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 138889671
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "id": {
+                "index": 0,
+                "type": "UInt64",
+                "messages": {}
+            },
+            "baseAmount": {
+                "index": 1,
+                "type": "UFix64",
+                "messages": {}
+            },
+            "interest": {
+                "index": 2,
+                "type": "UFix64",
+                "messages": {}
+            },
+            "duration": {
+                "index": 3,
+                "type": "UFix64",
+                "messages": {}
+            }
+        }
+    }
+}

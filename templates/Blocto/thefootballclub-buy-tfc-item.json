@@ -1,0 +1,96 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "262fdf986634f2c28861043f946510adb124a656d81a662bebd085dd4565ad8b",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "TheFootballClub Buy tfc item"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Buy NFT with {buyPrice} FUSD from {storefrontAddress}"
+                }
+            }
+        },
+        "cadence": "import FUSD from 0xFUSD_ADDRESS\nimport NonFungibleToken from 0xNON_FUNGIBLE_TOKEN_ADDRESS\nimport TFCItems from 0xTFC_ITEMS_ADDRESS\nimport NFTStorefront from 0xNFT_STOREFRONT_ADDRESS\nimport FungibleToken from 0xFUNGIBLE_TOKEN_ADDRESS\n\n/*\n    This transaction is used to buy a TFCItem for FUSD\n */\ntransaction(storefrontAddress: Address, listingResourceID: UInt64, buyPrice: UFix64) {\n    let paymentVault: @FungibleToken.Vault\n    let TFCItemsCollection: &TFCItems.Collection{NonFungibleToken.Receiver}\n    let storefront: &NFTStorefront.Storefront{NFTStorefront.StorefrontPublic}\n    let listing: &NFTStorefront.Listing{NFTStorefront.ListingPublic}\n\n    prepare(acct: AuthAccount) {\n        self.storefront = getAccount(storefrontAddress)\n            .getCapability<&NFTStorefront.Storefront{NFTStorefront.StorefrontPublic}>(\n                NFTStorefront.StorefrontPublicPath\n            )!\n            .borrow()\n            ?? panic(\"Could not borrow Storefront from provided address\")\n\n        self.listing = self.storefront.borrowListing(listingResourceID: listingResourceID)\n                    ?? panic(\"No Offer with that ID in Storefront\")\n        let price = self.listing.getDetails().salePrice\n\n        assert(buyPrice == price, message: \"buyPrice is NOT same with salePrice\")\n\n        let mainFlowVault = acct.borrow<&FUSD.Vault>(from: /storage/fusdVault)\n            ?? panic(\"Cannot borrow FUSD vault from acct storage\")\n        self.paymentVault <- mainFlowVault.withdraw(amount: price)\n\n        self.TFCItemsCollection = acct.borrow<&TFCItems.Collection{NonFungibleToken.Receiver}>(\n            from: TFCItems.CollectionStoragePath\n        ) ?? panic(\"Cannot borrow NFT collection receiver from account\")\n    }\n\n    execute {\n        let item <- self.listing.purchase(\n            payment: <-self.paymentVault\n        )\n\n        self.TFCItemsCollection.deposit(token: <-item)\n        \n        // Be kind and recycle\n        self.storefront.cleanup(listingResourceID: listingResourceID)\n    }\n}",
+        "dependencies": {
+            "0xFUSD_ADDRESS": {
+                "FUSD": {
+                    "testnet": {
+                        "address": "0xe223d8a629e49c68",
+                        "contract": "FUSD",
+                        "fq_address": "A.0xe223d8a629e49c68.FUSD",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 138881084
+                    }
+                }
+            },
+            "0xNON_FUNGIBLE_TOKEN_ADDRESS": {
+                "NonFungibleToken": {
+                    "testnet": {
+                        "address": "0x631e88ae7f1d7c20",
+                        "contract": "NonFungibleToken",
+                        "fq_address": "A.0x631e88ae7f1d7c20.NonFungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138881101
+                    }
+                }
+            },
+            "0xTFC_ITEMS_ADDRESS": {
+                "TFCItems": {
+                    "testnet": {
+                        "address": "0x91a6217c3b70cae8",
+                        "contract": "TFCItems",
+                        "fq_address": "A.0x91a6217c3b70cae8.TFCItems",
+                        "pin": "9524cc8b5eb8bb8f7d8cf4ee3c65374cafa55921d31d6f72ce08d1c4da8aad57",
+                        "pin_block_height": 138881196
+                    }
+                }
+            },
+            "0xNFT_STOREFRONT_ADDRESS": {
+                "NFTStorefront": {
+                    "testnet": {
+                        "address": "0x94b06cfca1d8a476",
+                        "contract": "NFTStorefront",
+                        "fq_address": "A.0x94b06cfca1d8a476.NFTStorefront",
+                        "pin": "ba061d95016d5506e9f5d1afda15d82eb066aa8b0552e8b26dc7950fa5714d51",
+                        "pin_block_height": 138881254
+                    }
+                }
+            },
+            "0xFUNGIBLE_TOKEN_ADDRESS": {
+                "FungibleToken": {
+                    "testnet": {
+                        "address": "0x9a0766d93b6608b7",
+                        "contract": "FungibleToken",
+                        "fq_address": "A.0x9a0766d93b6608b7.FungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138881276
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "storefrontAddress": {
+                "index": 0,
+                "type": "Address",
+                "messages": {}
+            },
+            "listingResourceID": {
+                "index": 1,
+                "type": "UInt64",
+                "messages": {}
+            },
+            "buyPrice": {
+                "index": 2,
+                "type": "UFix64",
+                "messages": {}
+            }
+        }
+    }
+}

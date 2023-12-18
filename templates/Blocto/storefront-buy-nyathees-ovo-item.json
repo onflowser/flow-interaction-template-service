@@ -1,0 +1,96 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "690bf6221aa78e8217f4b2bef0af5e09926bcbebcbb1e3355aec9e54fbc98edd",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "storefront Buy nyathees ovo item"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Purchase OVO NFT for {buyPrice} FLOW from {storefrontAddress}"
+                }
+            }
+        },
+        "cadence": "import FungibleToken from 0xFUNGIBLE_TOKEN_ADDRESS\nimport NonFungibleToken from 0xNON_FUNGIBLE_TOKEN_ADDRESS\nimport NFTStorefront from 0xNFT_STOREFRONT_ADDRESS\nimport FlowToken from 0xFLOW_TOKEN_ADDRESS\nimport NyatheesOVO from 0xNYATHEES_OVO_ADDRESS\n\ntransaction(listingResourceID: UInt64, storefrontAddress: Address, buyPrice: UFix64) {\n    let paymentVault: @FungibleToken.Vault\n    let nftCollection: &NyatheesOVO.Collection{NonFungibleToken.Receiver}\n    let storefront: &NFTStorefront.Storefront{NFTStorefront.StorefrontPublic}\n    let listing: &NFTStorefront.Listing{NFTStorefront.ListingPublic}\n\n    prepare(signer: AuthAccount) {\n        if signer.borrow<&NyatheesOVO.Collection>(from: NyatheesOVO.CollectionStoragePath) == nil {\n            signer.save(<-NyatheesOVO.createEmptyCollection(), to: NyatheesOVO.CollectionStoragePath)\n            signer.link<&NyatheesOVO.Collection{NonFungibleToken.CollectionPublic, NyatheesOVO.NFTCollectionPublic}>(NyatheesOVO.CollectionPublicPath, target: NyatheesOVO.CollectionStoragePath)\n        }\n\n        self.storefront = getAccount(storefrontAddress)\n            .getCapability<&NFTStorefront.Storefront{NFTStorefront.StorefrontPublic}>(NFTStorefront.StorefrontPublicPath)\n            .borrow()\n            ?? panic(\"Could not borrow Storefront from provided address\")\n\n        self.listing = self.storefront.borrowListing(listingResourceID: listingResourceID)\n            ?? panic(\"No Offer with that ID in Storefront\")\n        let price = self.listing.getDetails().salePrice\n\n        assert(buyPrice == price, message: \"buyPrice is NOT same with salePrice\")\n\n        let flowTokenVault = signer.borrow<&FlowToken.Vault>(from: /storage/flowTokenVault)\n            ?? panic(\"Cannot borrow FlowToken vault from signer storage\")\n        self.paymentVault <- flowTokenVault.withdraw(amount: price)\n\n        self.nftCollection = signer.borrow<&NyatheesOVO.Collection{NonFungibleToken.Receiver}>(from: NyatheesOVO.CollectionStoragePath)\n            ?? panic(\"Cannot borrow NFT collection receiver from account\")\n    }\n\n    execute {\n        let item <- self.listing.purchase(payment: <-self.paymentVault)\n        self.nftCollection.deposit(token: <-item)\n        self.storefront.cleanup(listingResourceID: listingResourceID)\n    }\n}\n",
+        "dependencies": {
+            "0xFUNGIBLE_TOKEN_ADDRESS": {
+                "FungibleToken": {
+                    "testnet": {
+                        "address": "0x9a0766d93b6608b7",
+                        "contract": "FungibleToken",
+                        "fq_address": "A.0x9a0766d93b6608b7.FungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138898645
+                    }
+                }
+            },
+            "0xNON_FUNGIBLE_TOKEN_ADDRESS": {
+                "NonFungibleToken": {
+                    "testnet": {
+                        "address": "0x631e88ae7f1d7c20",
+                        "contract": "NonFungibleToken",
+                        "fq_address": "A.0x631e88ae7f1d7c20.NonFungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138898678
+                    }
+                }
+            },
+            "0xNFT_STOREFRONT_ADDRESS": {
+                "NFTStorefront": {
+                    "testnet": {
+                        "address": "0x94b06cfca1d8a476",
+                        "contract": "NFTStorefront",
+                        "fq_address": "A.0x94b06cfca1d8a476.NFTStorefront",
+                        "pin": "ba061d95016d5506e9f5d1afda15d82eb066aa8b0552e8b26dc7950fa5714d51",
+                        "pin_block_height": 138898736
+                    }
+                }
+            },
+            "0xFLOW_TOKEN_ADDRESS": {
+                "FlowToken": {
+                    "testnet": {
+                        "address": "0x7e60df042a9c0868",
+                        "contract": "FlowToken",
+                        "fq_address": "A.0x7e60df042a9c0868.FlowToken",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 138898773
+                    }
+                }
+            },
+            "0xNYATHEES_OVO_ADDRESS": {
+                "NyatheesOVO": {
+                    "testnet": {
+                        "address": "0xacf3dfa413e00f9f",
+                        "contract": "NyatheesOVO",
+                        "fq_address": "A.0xacf3dfa413e00f9f.NyatheesOVO",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 138898805
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "listingResourceID": {
+                "index": 0,
+                "type": "UInt64",
+                "messages": {}
+            },
+            "storefrontAddress": {
+                "index": 1,
+                "type": "Address",
+                "messages": {}
+            },
+            "buyPrice": {
+                "index": 2,
+                "type": "UFix64",
+                "messages": {}
+            }
+        }
+    }
+}

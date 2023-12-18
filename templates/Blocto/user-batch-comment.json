@@ -1,0 +1,47 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "f08009f709e47b83519ceed58c869638ba116b98c142e8dfb3a53ac23aa9b89f",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "user Batch comment"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Create comment"
+                }
+            }
+        },
+        "cadence": "// batchCreateComment v2\nimport MIKOSEANFT from 0xMIKOSEA_MIKOSEANFT_ADDRESS\n\ntransaction(nftIDs:[UInt64], comment: String){\n    let address: Address\n    let projectId:UInt64\n    let itemId:UInt64\n\n    prepare(signer:AuthAccount){\n        self.address = signer.address\n        if let nftData = MIKOSEANFT.fetch(_from: self.address, itemId: nftIDs[0]) {\n            self.projectId = nftData.data.projectId\n            self.itemId = nftData.data.itemId\n        } else {\n            panic(\"Not found nft\")\n        }\n    }\n    execute{\n        for nftId in nftIDs {\n            MIKOSEANFT.createComment(projectId:self.projectId, itemId:self.itemId, userAddress:self.address, nftId:nftId, comment: comment)\n        }\n    }\n}\n",
+        "dependencies": {
+            "0xMIKOSEA_MIKOSEANFT_ADDRESS": {
+                "MIKOSEANFT": {
+                    "testnet": {
+                        "address": "0x713306ac51ac7ddb",
+                        "contract": "MIKOSEANFT",
+                        "fq_address": "A.0x713306ac51ac7ddb.MIKOSEANFT",
+                        "pin": "9524cc8b5eb8bb8f7d8cf4ee3c65374cafa55921d31d6f72ce08d1c4da8aad57",
+                        "pin_block_height": 138900470
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "nftIDs": {
+                "index": 0,
+                "type": "UInt64",
+                "messages": {}
+            },
+            "comment": {
+                "index": 1,
+                "type": "String",
+                "messages": {}
+            }
+        }
+    }
+}

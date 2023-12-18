@@ -1,0 +1,42 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "76bfc0e7b312becf5b6a8927b5f8d6de870a08f63633a811bfdc2636483babd0",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "user Batch delete comment"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Delete comment"
+                }
+            }
+        },
+        "cadence": "import MIKOSEANFT from 0xMIKOSEA_MIKOSEANFT_ADDRESS\n\ntransaction(commentIds:[UInt64]){\n  execute{\n    for commentId in commentIds {\n      MIKOSEANFT.deleteComment(commentId: commentId)\n    }\n  }\n}\n",
+        "dependencies": {
+            "0xMIKOSEA_MIKOSEANFT_ADDRESS": {
+                "MIKOSEANFT": {
+                    "testnet": {
+                        "address": "0x713306ac51ac7ddb",
+                        "contract": "MIKOSEANFT",
+                        "fq_address": "A.0x713306ac51ac7ddb.MIKOSEANFT",
+                        "pin": "9524cc8b5eb8bb8f7d8cf4ee3c65374cafa55921d31d6f72ce08d1c4da8aad57",
+                        "pin_block_height": 138900567
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "commentIds": {
+                "index": 0,
+                "type": "UInt64",
+                "messages": {}
+            }
+        }
+    }
+}

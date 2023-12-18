@@ -1,0 +1,69 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "f752b682cd9fa3ba0d79b61b9f157c832f7942b14bfec8a2fee245a078350f9d",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "Find Renew"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Renew the lease of name {name} in FIND for {amount} FUSD"
+                }
+            }
+        },
+        "cadence": "import FungibleToken from 0xFUNGIBLE_TOKEN_ADDRESS\nimport FUSD from 0xFUSD_ADDRESS\nimport Profile from 0xFIND_ADDRESS\nimport FIND from 0xFIND_ADDRESS\n\ntransaction(name: String, amount: UFix64) {\n\tprepare(acct: AuthAccount) {\n\n\t\tlet profileCap = acct.getCapability<&{Profile.Public}>(Profile.publicPath)\n\n\t\tlet price=FIND.calculateCost(name)\n\t\tif amount != price {\n\t\t\tpanic(\"expected renew cost is not the same as calculated renew cost\")\n\t\t}\n\t\tlet vaultRef = acct.borrow<&FUSD.Vault>(from: /storage/fusdVault) ?? panic(\"Could not borrow reference to the fusdVault!\")\n\t\tlet payVault <- vaultRef.withdraw(amount: price) as! @FUSD.Vault\n\n\t\tlet finLeases= acct.borrow<&FIND.LeaseCollection>(from:FIND.LeaseStoragePath)!\n\t\tlet finToken= finLeases.borrow(name)\n\t\tfinToken.extendLease(<- payVault)\n\t}\n}\n\n",
+        "dependencies": {
+            "0xFUNGIBLE_TOKEN_ADDRESS": {
+                "FungibleToken": {
+                    "testnet": {
+                        "address": "0x9a0766d93b6608b7",
+                        "contract": "FungibleToken",
+                        "fq_address": "A.0x9a0766d93b6608b7.FungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138840172
+                    }
+                }
+            },
+            "0xFUSD_ADDRESS": {
+                "FUSD": {
+                    "testnet": {
+                        "address": "0xe223d8a629e49c68",
+                        "contract": "FUSD",
+                        "fq_address": "A.0xe223d8a629e49c68.FUSD",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 138840203
+                    }
+                }
+            },
+            "0xFIND_ADDRESS": {
+                "FIND": {
+                    "testnet": {
+                        "address": "0x37a05b1ecacc80f7",
+                        "contract": "FIND",
+                        "fq_address": "A.0x37a05b1ecacc80f7.FIND",
+                        "pin": "751fcffa1f40d4edff5f6cff49d14e6b67bbd33cad3d2dd61fdc04ce97db4a4a",
+                        "pin_block_height": 138840383
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "name": {
+                "index": 0,
+                "type": "String",
+                "messages": {}
+            },
+            "amount": {
+                "index": 1,
+                "type": "UFix64",
+                "messages": {}
+            }
+        }
+    }
+}

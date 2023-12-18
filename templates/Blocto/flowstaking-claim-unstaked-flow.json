@@ -1,0 +1,55 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "2548bc984f0af09807ddd7d9a7234e67f98ecfd99549726714a9b0ea1ce24516",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "FlowStaking Claim unstaked flow"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Claim unstaked tokens: {amount} FLOW",
+                    "zh-CN": "領取解除质押的代币: {amount} FLOW 代币",
+                    "zh-TW": "領取解除質押的代幣: {amount} FLOW 代幣"
+                }
+            }
+        },
+        "cadence": "import LockedTokens from 0xLOCKED_TOKEN_ADDRESS\nimport FlowToken from 0xFLOW_TOKEN_ADDRESS\n\ntransaction(amount: UFix64) {\n  let nodeDelegatorProxy: LockedTokens.LockedNodeDelegatorProxy\n  let holderRef: &LockedTokens.TokenHolder\n  let vaultRef: &FlowToken.Vault\n\n  prepare(acct: AuthAccount) {\n    self.holderRef = acct.borrow<&LockedTokens.TokenHolder>(from: LockedTokens.TokenHolderStoragePath) \n      ?? panic(\"TokenHolder is not saved at specified path\")\n\n    self.vaultRef = acct.borrow<&FlowToken.Vault>(from: /storage/flowTokenVault)\n      ?? panic(\"Could not borrow flow token vault ref\")\n    \n    self.nodeDelegatorProxy = self.holderRef.borrowDelegator()\n  }\n\n  execute {\n    self.nodeDelegatorProxy.withdrawUnstakedTokens(amount: amount)\n\n    // Unlock as much as possible\n    let limit = self.holderRef.getUnlockLimit()\n    let max = limit > amount ? amount : limit\n    \n    if (max > 0.0) {\n      self.vaultRef.deposit(from: <-self.holderRef.withdraw(amount: max))\n    }\n  } \n}",
+        "dependencies": {
+            "0xLOCKED_TOKEN_ADDRESS": {
+                "LockedTokens": {
+                    "testnet": {
+                        "address": "0x95e019a17d0e23d7",
+                        "contract": "LockedTokens",
+                        "fq_address": "A.0x95e019a17d0e23d7.LockedTokens",
+                        "pin": "8c6baff06e290c032e1dabac5b99c800ef040b06bec84d351d03927c4daf7e75",
+                        "pin_block_height": 138839565
+                    }
+                }
+            },
+            "0xFLOW_TOKEN_ADDRESS": {
+                "FlowToken": {
+                    "testnet": {
+                        "address": "0x7e60df042a9c0868",
+                        "contract": "FlowToken",
+                        "fq_address": "A.0x7e60df042a9c0868.FlowToken",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 138839583
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "amount": {
+                "index": 0,
+                "type": "UFix64",
+                "messages": {}
+            }
+        }
+    }
+}

@@ -1,0 +1,71 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "5b07e138b8d8f2fa7ed6b782c6c04b524a646d84501e312a54b6f73d9f36d1e5",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "GeniaceNFT Repay"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Redeem NFT {Uuid} with {RepayAmount} FLOW tokens.",
+                    "zh-CN": "用 {RepayAmount} FLOW 代币赎回 NFT {Uuid}",
+                    "zh-TW": "用 {RepayAmount} FLOW 代幣贖回 NFT {Uuid}"
+                }
+            }
+        },
+        "cadence": "import NonFungibleToken from 0xNON_FUNGIBLE_TOKEN_ADDRESS\nimport NFTLendingPlace from 0xMANTLEFI_NFTLENDINGPLACE\nimport FlowToken from 0xFLOW_TOKEN_ADDRESS\n\n// Let the borrower to repay FLOW\ntransaction(Uuid: UInt64, RepayAmount: UFix64) {\n\n    let temporaryVault: @FlowToken.Vault\n    let collectionRef: &NonFungibleToken.Collection\n    let landingPlaceRef: &NFTLendingPlace.LendingCollection\n\n    prepare(acct: AuthAccount) {\n\n        let vaultRef = acct.borrow<&FlowToken.Vault>(from: /storage/flowTokenVault)\n            ?? panic(\"Could not borrow borrower's vault reference\")\n\n        self.temporaryVault <- vaultRef.withdraw(amount: RepayAmount) as! @FlowToken.Vault\n\n        self.collectionRef = acct.borrow<&NonFungibleToken.Collection>(from: /storage/GeniaceNFTCollection)\n            ?? panic(\"Could not borrow borrower's NFT collection reference\")\n\n        self.landingPlaceRef =  acct.borrow<&NFTLendingPlace.LendingCollection>(from: /storage/NFTLendingPlaceCollection)\n            ?? panic(\"Could not borrow borrower's LenderTicket reference\")\n    }\n\n    execute {\n        let returnNft <- self.landingPlaceRef.repay(uuid: Uuid, repayAmount: <-self.temporaryVault)\n\n        self.collectionRef.deposit(token: <-returnNft)\n    }\n}\n",
+        "dependencies": {
+            "0xNON_FUNGIBLE_TOKEN_ADDRESS": {
+                "NonFungibleToken": {
+                    "testnet": {
+                        "address": "0x631e88ae7f1d7c20",
+                        "contract": "NonFungibleToken",
+                        "fq_address": "A.0x631e88ae7f1d7c20.NonFungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138890652
+                    }
+                }
+            },
+            "0xMANTLEFI_NFTLENDINGPLACE": {
+                "NFTLendingPlace": {
+                    "testnet": {
+                        "address": "0x615a6bf3445b9c61",
+                        "contract": "NFTLendingPlace",
+                        "fq_address": "A.0x615a6bf3445b9c61.NFTLendingPlace",
+                        "pin": "7723617b4999f66ce1942ee3847d899b74dca4b43ff6f7ce75f32c7d8b5b43a6",
+                        "pin_block_height": 138890711
+                    }
+                }
+            },
+            "0xFLOW_TOKEN_ADDRESS": {
+                "FlowToken": {
+                    "testnet": {
+                        "address": "0x7e60df042a9c0868",
+                        "contract": "FlowToken",
+                        "fq_address": "A.0x7e60df042a9c0868.FlowToken",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 138890764
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "Uuid": {
+                "index": 0,
+                "type": "UInt64",
+                "messages": {}
+            },
+            "RepayAmount": {
+                "index": 1,
+                "type": "UFix64",
+                "messages": {}
+            }
+        }
+    }
+}

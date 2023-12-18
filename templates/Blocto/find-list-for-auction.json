@@ -1,0 +1,62 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "7d621f05cfde59be8acd193ce70ee6fab857bed498b8056f94540fc95947c526",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "Find List for auction"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "List name {name} for auction with startPrice {auctionStartPrice} and reserve price {auctionReservePrice}"
+                }
+            }
+        },
+        "cadence": "import FIND from 0xFIND_ADDRESS\n\ntransaction(name: String, auctionStartPrice: UFix64, auctionReservePrice: UFix64, auctionDuration: UFix64, auctionExtensionOnLateBid: UFix64) {\n\tprepare(acct: AuthAccount) {\n\t\tlet finLeases= acct.borrow<&FIND.LeaseCollection>(from:FIND.LeaseStoragePath)!\n\t\tfinLeases.listForAuction(name: name, auctionStartPrice: auctionStartPrice, auctionReservePrice: auctionReservePrice, auctionDuration: auctionDuration,  auctionExtensionOnLateBid: auctionExtensionOnLateBid)\n\n\t}\n}\n\n",
+        "dependencies": {
+            "0xFIND_ADDRESS": {
+                "FIND": {
+                    "testnet": {
+                        "address": "0x37a05b1ecacc80f7",
+                        "contract": "FIND",
+                        "fq_address": "A.0x37a05b1ecacc80f7.FIND",
+                        "pin": "751fcffa1f40d4edff5f6cff49d14e6b67bbd33cad3d2dd61fdc04ce97db4a4a",
+                        "pin_block_height": 138840088
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "name": {
+                "index": 0,
+                "type": "String",
+                "messages": {}
+            },
+            "auctionStartPrice": {
+                "index": 1,
+                "type": "UFix64",
+                "messages": {}
+            },
+            "auctionReservePrice": {
+                "index": 2,
+                "type": "UFix64",
+                "messages": {}
+            },
+            "auctionDuration": {
+                "index": 3,
+                "type": "UFix64",
+                "messages": {}
+            },
+            "auctionExtensionOnLateBid": {
+                "index": 4,
+                "type": "UFix64",
+                "messages": {}
+            }
+        }
+    }
+}

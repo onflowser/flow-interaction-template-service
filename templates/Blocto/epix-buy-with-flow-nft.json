@@ -1,0 +1,97 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "0a5203cc0f52bce96541c6620ba25a50fe3237dd580798fca187d3bead54f617",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "Epix Buy with flow nft"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Buy nft {nft_id} for {flowAmount} FLOW and store in {recipient}",
+                    "zh-CN": "为 {flowAmount} FLOW 购买 nft {nft_id} 并存储在 {recipient}",
+                    "zh-TW": "為 {flowAmount} FLOW 購買 nft {nft_id} 並存儲在 {recipient}"
+                }
+            }
+        },
+        "cadence": "import FungibleToken from 0xFUNGIBLE_TOKEN_ADDRESS\nimport FlowToken from 0xFLOW_TOKEN_ADDRESS\nimport NonFungibleToken from 0xNON_FUNGIBLE_TOKEN_ADDRESS\nimport Epix from 0xEPIX_ADDRESS\n\n// This transaction is for buying a NFT using flow tokens to a recipient account\ntransaction(flowAmount: UFix64, payees: [Address], payeesShares: [UFix64], recipient: Address, nft_id: UInt64) {\n\n    let sellerCollectionRef: &Epix.Collection\n    let buyerVault: &FlowToken.Vault{FungibleToken.Provider}\n\n    prepare(seller: AuthAccount, buyer: AuthAccount) {\n        pre {\n            payees.length > 0 : \"need to provide atleast one payee\"\n            payees.length == payeesShares.length : \"need to define each payee share\"\n        }\n\n        var x = 0\n        var sum = 0.0\n        while x < payeesShares.length {\n            sum = sum + payeesShares[x]\n            x = x + 1\n        }\n        if(sum < 1.0 || sum > 1.0) {\n            panic(\"payees shares need to be equal to 100%\")\n        }\n\n        self.buyerVault = buyer.borrow<&FlowToken.Vault{FungibleToken.Provider}>(from: /storage/flowTokenVault)!\n\n        // borrow a reference to the sellers NFT collection\n        self.sellerCollectionRef = seller.borrow<&Epix.Collection>(from: Epix.CollectionStoragePath)\n            ?? panic(\"Could not borrow a reference to the seller's collection\")\n    }\n\n    execute {\n        // deposit tokens to payees\n        var x = 0\n        while x < payees.length {\n            let payeeCap = getAccount(payees[x]).getCapability<&{FungibleToken.Receiver}>(/public/flowTokenReceiver)\n            if let vaultRef = payeeCap.borrow() {\n                vaultRef.deposit(from: <-self.buyerVault.withdraw(amount: UFix64(flowAmount * payeesShares[x])))\n            } else {\n                panic(\"couldn't get payee vault ref\")\n            }\n            x = x + 1\n        }\n\n        // Get the public account object for the recipient\n        let recipient = getAccount(recipient)\n\n        // withdraw the NFT from the owner's collection\n        let nft <- self.sellerCollectionRef.withdraw(withdrawID: nft_id)\n\n        // borrow a public reference to the receivers collection\n        let depositRef = recipient.getCapability(Epix.CollectionPublicPath)!.borrow<&{NonFungibleToken.CollectionPublic}>()!\n\n        // Deposit the NFT in the recipient's collection\n        depositRef.deposit(token: <-nft)\n    }\n}",
+        "dependencies": {
+            "0xFUNGIBLE_TOKEN_ADDRESS": {
+                "FungibleToken": {
+                    "testnet": {
+                        "address": "0x9a0766d93b6608b7",
+                        "contract": "FungibleToken",
+                        "fq_address": "A.0x9a0766d93b6608b7.FungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 139076441
+                    }
+                }
+            },
+            "0xFLOW_TOKEN_ADDRESS": {
+                "FlowToken": {
+                    "testnet": {
+                        "address": "0x7e60df042a9c0868",
+                        "contract": "FlowToken",
+                        "fq_address": "A.0x7e60df042a9c0868.FlowToken",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 139076481
+                    }
+                }
+            },
+            "0xNON_FUNGIBLE_TOKEN_ADDRESS": {
+                "NonFungibleToken": {
+                    "testnet": {
+                        "address": "0x631e88ae7f1d7c20",
+                        "contract": "NonFungibleToken",
+                        "fq_address": "A.0x631e88ae7f1d7c20.NonFungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 139076506
+                    }
+                }
+            },
+            "0xEPIX_ADDRESS": {
+                "Epix": {
+                    "testnet": {
+                        "address": "0x244f523a150d41c1",
+                        "contract": "Epix",
+                        "fq_address": "A.0x244f523a150d41c1.Epix",
+                        "pin": "7723617b4999f66ce1942ee3847d899b74dca4b43ff6f7ce75f32c7d8b5b43a6",
+                        "pin_block_height": 139076585
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "flowAmount": {
+                "index": 0,
+                "type": "UFix64",
+                "messages": {}
+            },
+            "payees": {
+                "index": 1,
+                "type": "Address",
+                "messages": {}
+            },
+            "payeesShares": {
+                "index": 2,
+                "type": "UFix64",
+                "messages": {}
+            },
+            "recipient": {
+                "index": 3,
+                "type": "Address",
+                "messages": {}
+            },
+            "nft_id": {
+                "index": 4,
+                "type": "UInt64",
+                "messages": {}
+            }
+        }
+    }
+}

@@ -1,0 +1,71 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "b44e8b8d1dea65cd34604302f045e4f01bfe758ce8cafe95d5c49b584de3ffc0",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "Gogoro Claim gogoro nft"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Claim Gogoro NFT",
+                    "zh-CN": "领取 Gogogo NFT",
+                    "zh-TW": "領取 Gogogo NFT"
+                }
+            }
+        },
+        "cadence": "import NonFungibleToken from 0xNON_FUNGIBLE_TOKEN_ADDRESS\nimport GogoroCollectible from 0xGOGORO_COLLECTIBLE_ADDRESS\nimport BloctoStorageRent from 0xBLOCTO_STORAGE_RENT_ADDRESS\n\ntransaction(itemID: UInt64, codeHash: String) {\n    let minter: &GogoroCollectible.Admin\n    let userAddress: Address\n    prepare(user: AuthAccount, admin: AuthAccount) {\n        self.minter = admin\n            .borrow<&GogoroCollectible.Admin>(from: GogoroCollectible.AdminStoragePath)\n            ?? panic(\"admin account is not the minter\")\n        self.userAddress = user.address\n        // If user does not have Gogoro enabled yet, enable now\n        if user.borrow<&GogoroCollectible.Collection>(from: GogoroCollectible.CollectionStoragePath) == nil {\n            let collection <- GogoroCollectible.createEmptyCollection() as! @GogoroCollectible.Collection\n            user.save(<-collection, to: GogoroCollectible.CollectionStoragePath)\n            user.link<&GogoroCollectible.Collection{NonFungibleToken.CollectionPublic, GogoroCollectible.CollectionPublic}>(\n                GogoroCollectible.CollectionPublicPath,\n                target: GogoroCollectible.CollectionStoragePath)\n        }\n    }\n    execute {\n        let userAccount = getAccount(self.userAddress)\n        let receiverRef = userAccount.getCapability(GogoroCollectible.CollectionPublicPath)\n            .borrow<&{NonFungibleToken.CollectionPublic}>()\n            ?? panic(\"Could not borrow receiver reference to the user's collection\")\n        self.minter.mintNFT(recipient: receiverRef, itemID: itemID, codeHash: codeHash)\n        // Replenish storage fee\n        BloctoStorageRent.tryRefill(self.userAddress)\n    }\n}\n",
+        "dependencies": {
+            "0xNON_FUNGIBLE_TOKEN_ADDRESS": {
+                "NonFungibleToken": {
+                    "testnet": {
+                        "address": "0x631e88ae7f1d7c20",
+                        "contract": "NonFungibleToken",
+                        "fq_address": "A.0x631e88ae7f1d7c20.NonFungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138839615
+                    }
+                }
+            },
+            "0xGOGORO_COLLECTIBLE_ADDRESS": {
+                "GogoroCollectible": {
+                    "testnet": {
+                        "address": "0x5fc35f03a6f33561",
+                        "contract": "GogoroCollectible",
+                        "fq_address": "A.0x5fc35f03a6f33561.GogoroCollectible",
+                        "pin": "7723617b4999f66ce1942ee3847d899b74dca4b43ff6f7ce75f32c7d8b5b43a6",
+                        "pin_block_height": 138839692
+                    }
+                }
+            },
+            "0xBLOCTO_STORAGE_RENT_ADDRESS": {
+                "BloctoStorageRent": {
+                    "testnet": {
+                        "address": "0xe563b9f8c70ab608",
+                        "contract": "BloctoStorageRent",
+                        "fq_address": "A.0xe563b9f8c70ab608.BloctoStorageRent",
+                        "pin": "9524cc8b5eb8bb8f7d8cf4ee3c65374cafa55921d31d6f72ce08d1c4da8aad57",
+                        "pin_block_height": 138839731
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "itemID": {
+                "index": 0,
+                "type": "UInt64",
+                "messages": {}
+            },
+            "codeHash": {
+                "index": 1,
+                "type": "String",
+                "messages": {}
+            }
+        }
+    }
+}

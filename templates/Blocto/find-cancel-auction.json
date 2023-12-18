@@ -1,0 +1,42 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "dd59645a0dbb2ddf006c7ed0483dc8f603502900674771289ab9921fda7b37bd",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "Find Cancel auction"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Cancel and delist on ongoing auction for  {name}"
+                }
+            }
+        },
+        "cadence": "import FIND from 0xFIND_ADDRESS\n\ntransaction(name: String) {\n\tprepare(account: AuthAccount) {\n\n\t\tlet finLeases= account.borrow<&FIND.LeaseCollection>(from:FIND.LeaseStoragePath)!\n\t\tfinLeases.cancel(name)\n\t\tfinLeases.delistAuction(name)\n\n\t}\n}\n\n",
+        "dependencies": {
+            "0xFIND_ADDRESS": {
+                "FIND": {
+                    "testnet": {
+                        "address": "0x37a05b1ecacc80f7",
+                        "contract": "FIND",
+                        "fq_address": "A.0x37a05b1ecacc80f7.FIND",
+                        "pin": "751fcffa1f40d4edff5f6cff49d14e6b67bbd33cad3d2dd61fdc04ce97db4a4a",
+                        "pin_block_height": 138839838
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "name": {
+                "index": 0,
+                "type": "String",
+                "messages": {}
+            }
+        }
+    }
+}

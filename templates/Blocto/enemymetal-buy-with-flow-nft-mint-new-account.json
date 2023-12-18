@@ -1,0 +1,77 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "c313d4ed6d89203514b485f7caf83d91ad25309281c189819d531a6e7204308f",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "EnemyMetal Buy with flow nft mint new account"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Buy new nft mint for {flowAmount} FLOW and store in a new account",
+                    "zh-CN": "为 {flowAmount} FLOW 购买新的 nft mint 并存储在新帐户中",
+                    "zh-TW": "為 {flowAmount} FLOW 購買新的 nft mint 並存儲在新帳戶中"
+                }
+            }
+        },
+        "cadence": "import FungibleToken from 0xFUNGIBLE_TOKEN_ADDRESS\nimport FlowToken from 0xFLOW_TOKEN_ADDRESS\nimport NonFungibleToken from 0xNON_FUNGIBLE_TOKEN_ADDRESS\nimport EnemyMetal from 0xENEMY_METAL_ADDRESS\n\npub fun trySetupFlow(acct: AuthAccount) {\n    // setup account to use flow tokens\n    if acct.borrow<&FlowToken.Vault>(from: /storage/flowTokenVault) == nil {\n        // Create a new flow Vault and put it in storage\n        acct.save(<-FlowToken.createEmptyVault(), to: /storage/flowTokenVault)\n        // Create a public capability to the Vault that only exposes\n        // the deposit function through the Receiver interface\n        acct.link<&FlowToken.Vault{FungibleToken.Receiver}>(\n            /public/flowTokenReceiver,\n            target: /storage/flowTokenVault\n        )\n        // Create a public capability to the Vault that only exposes\n        // the balance field through the Balance interface\n        acct.link<&FlowToken.Vault{FungibleToken.Balance}>(\n            /public/flowTokenBalance,\n            target: /storage/flowTokenVault\n        )\n    }\n}\n\npub fun trySetupNft(acct: AuthAccount) {\n    // setup account to receive nfts from enemymetal collection\n    if acct.borrow<&EnemyMetal.Collection>(from: EnemyMetal.CollectionStoragePath) == nil {\n        // Create a new empty collection\n        let collection <- EnemyMetal.createEmptyCollection()\n        // save it to the account\n        acct.save(<-collection, to: EnemyMetal.CollectionStoragePath)\n        // create a public capability for the collection\n        acct.link<&EnemyMetal.Collection{NonFungibleToken.CollectionPublic, EnemyMetal.EnemyMetalCollectionPublic}>(EnemyMetal.CollectionPublicPath as! CapabilityPath, target: EnemyMetal.CollectionStoragePath)\n    }\n}\n\npub fun createAccount(pubKeys: [String], payer: AuthAccount): AuthAccount {\n    let acct = AuthAccount(payer: payer)\n    for key in pubKeys {\n        acct.addPublicKey(key.decodeHex())\n    }\n    trySetupNft(acct: acct)\n    trySetupFlow(acct: acct)\n    return acct\n}\n\n// This transaction is for buying a NFT mint using flow tokens\ntransaction(flowAmount: UFix64, payees: [Address], payeesShares: [UFix64], recipientKeys: [String], metadataArray: [String], claimMetadatasArray: [[String]]) {\n\n    let minter: &EnemyMetal.NFTMinter\n    let recipient: AuthAccount\n    let buyerVault: &FlowToken.Vault{FungibleToken.Provider}\n    var nfts: [EnemyMetal.NFTData]\n\n    prepare(minter: AuthAccount, custodian: AuthAccount, buyer: AuthAccount) {\n        pre {\n            metadataArray.length == claimMetadatasArray.length : \"metadata array must be same size of claim metadatas array\"\n            payees.length > 0 : \"need to provide atleast one payee\"\n            payees.length == payeesShares.length : \"need to define each payee share\"\n            recipientKeys.length > 0 : \"need to define atleast one public key\"\n        }\n\n        self.recipient = createAccount(pubKeys: recipientKeys, payer: custodian)\n\n        var x = 0\n        var sum = 0.0\n        while x < payeesShares.length {\n            sum = sum + payeesShares[x]\n            x = x + 1\n        }\n        if(sum < 1.0 || sum > 1.0) {\n            panic(\"payees shares need to be equal to 100%\")\n        }\n\n        // borrow a reference to the NFTMinter resource in storage\n        self.minter = minter.borrow<&EnemyMetal.NFTMinter>(from: EnemyMetal.MinterStoragePath)\n            ?? panic(\"Could not borrow a reference to the NFT minter\")\n\n        // build nfts data struct\n        self.nfts = [];\n        x = 0;\n        while x < metadataArray.length {\n            var claims: [EnemyMetal.NFTData] = [];\n            var currClaims: [String] = claimMetadatasArray[x];\n            var y = 0;\n            while y < currClaims.length {\n                claims.append(EnemyMetal.NFTData(metadata: currClaims[y], claims: []));\n                y = y + 1;\n            }\n            self.nfts.append(EnemyMetal.NFTData(metadata: metadataArray[x], claims: claims));\n            x = x + 1;\n        }\n\n        self.buyerVault = buyer.borrow<&FlowToken.Vault{FungibleToken.Provider}>(from: /storage/flowTokenVault)!\n    }\n\n    execute {\n        // deposit tokens to payees\n        var x = 0\n        while x < payees.length {\n            let payeeCap = getAccount(payees[x]).getCapability<&{FungibleToken.Receiver}>(/public/flowTokenReceiver)\n            if let vaultRef = payeeCap.borrow() {\n                vaultRef.deposit(from: <-self.buyerVault.withdraw(amount: UFix64(flowAmount * payeesShares[x])))\n            } else {\n                panic(\"couldn't get payee vault ref\")\n            }\n            x = x + 1\n        }\n\n        // Borrow the recipient's public NFT collection reference\n        let receiver = self.recipient\n            .getCapability(EnemyMetal.CollectionPublicPath)!\n            .borrow<&{NonFungibleToken.CollectionPublic}>()\n            ?? panic(\"Could not get receiver reference to the NFT Collection\")\n\n        x = 0;\n        while x < self.nfts.length {\n            // Mint the NFT and deposit it to the recipient's collection\n            self.minter.mintNFT(recipient: receiver, data: self.nfts[x]);\n            x = x + 1;\n        }\n    }\n}",
+        "dependencies": {
+            "0xFUNGIBLE_TOKEN_ADDRESS": {
+                "FungibleToken": {
+                    "testnet": {
+                        "address": "0x9a0766d93b6608b7",
+                        "contract": "FungibleToken",
+                        "fq_address": "A.0x9a0766d93b6608b7.FungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 139075597
+                    }
+                }
+            },
+            "0xFLOW_TOKEN_ADDRESS": {
+                "FlowToken": {
+                    "testnet": {
+                        "address": "0x7e60df042a9c0868",
+                        "contract": "FlowToken",
+                        "fq_address": "A.0x7e60df042a9c0868.FlowToken",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 139075632
+                    }
+                }
+            },
+            "0xNON_FUNGIBLE_TOKEN_ADDRESS": {
+                "NonFungibleToken": {
+                    "testnet": {
+                        "address": "0x631e88ae7f1d7c20",
+                        "contract": "NonFungibleToken",
+                        "fq_address": "A.0x631e88ae7f1d7c20.NonFungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 139075682
+                    }
+                }
+            },
+            "0xENEMY_METAL_ADDRESS": {
+                "EnemyMetal": {
+                    "testnet": {
+                        "address": "0x244f523a150d41c1",
+                        "contract": "EnemyMetal",
+                        "fq_address": "A.0x244f523a150d41c1.EnemyMetal",
+                        "pin": "7723617b4999f66ce1942ee3847d899b74dca4b43ff6f7ce75f32c7d8b5b43a6",
+                        "pin_block_height": 139075770
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "acct": {
+                "index": 0,
+                "type": "AuthAccount",
+                "messages": {}
+            }
+        }
+    }
+}

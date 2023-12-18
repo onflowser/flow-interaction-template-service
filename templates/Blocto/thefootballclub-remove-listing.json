@@ -1,0 +1,42 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "e60fbcea91ea5be10c96cefb338206c4ada5d00fb7b3b31767ce860dc06e1c0b",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "TheFootballClub Remove listing"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Remove NFT item sale listing"
+                }
+            }
+        },
+        "cadence": "import NFTStorefront from 0xNFT_STOREFRONT_ADDRESS\n\n/*\n    Removes a listing from an account's storefront\n*/\ntransaction(listingResourceID: UInt64) {\n    let storefront: &NFTStorefront.Storefront{NFTStorefront.StorefrontManager}\n\n    prepare(acct: AuthAccount) {\n        self.storefront = acct.borrow<&NFTStorefront.Storefront{NFTStorefront.StorefrontManager}>(from: NFTStorefront.StorefrontStoragePath)\n            ?? panic(\"Missing or mis-typed NFTStorefront.Storefront\")\n    }\n\n    execute {\n        self.storefront.removeListing(listingResourceID: listingResourceID)\n    }\n}",
+        "dependencies": {
+            "0xNFT_STOREFRONT_ADDRESS": {
+                "NFTStorefront": {
+                    "testnet": {
+                        "address": "0x94b06cfca1d8a476",
+                        "contract": "NFTStorefront",
+                        "fq_address": "A.0x94b06cfca1d8a476.NFTStorefront",
+                        "pin": "ba061d95016d5506e9f5d1afda15d82eb066aa8b0552e8b26dc7950fa5714d51",
+                        "pin_block_height": 138881112
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "listingResourceID": {
+                "index": 0,
+                "type": "UInt64",
+                "messages": {}
+            }
+        }
+    }
+}

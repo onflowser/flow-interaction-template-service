@@ -1,0 +1,70 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "a7c35e6e78967ec6b421a968fbe8d5f357c7dc9b77a1e35e4e521b9b8500b2b5",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "FanTop Sell_token"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "List FanTop token.",
+                    "ja": "FanTopトークンを出品します"
+                }
+            }
+        },
+        "cadence": "import FanTopToken from 0xFANTOP_ADDRESS\nimport FanTopPermissionV2a from 0xFANTOP_ADDRESS\n\ntransaction(\n  agent: Address,\n  orderId: String,\n  refId: String,\n  nftId: UInt64,\n  version: UInt32,\n  metadata: [String],\n  signature: String,\n  keyIndex: Int\n) {\n  let capability: Capability<&FanTopToken.Collection>\n  let user: FanTopPermissionV2a.User\n\n  prepare(account: AuthAccount) {\n    self.user = FanTopPermissionV2a.User()\n    var capability = account.getCapability<&FanTopToken.Collection>(/private/FanTopTokenCollection)\n    if !capability.check() {\n      capability = account.link<&FanTopToken.Collection>(/private/FanTopTokenCollection, target:FanTopToken.collectionStoragePath) ?? panic(\"Link failed\")\n    }\n    self.capability = capability\n  }\n\n  execute {\n    self.user.sell(\n      agent: agent,\n      capability: self.capability,\n      orderId: orderId,\n      refId: refId,\n      nftId: nftId,\n      version: version,\n      metadata: metadata,\n      signature: signature.decodeHex(),\n      keyIndex: keyIndex\n    )\n  }\n}",
+        "dependencies": {
+            "0xFANTOP_ADDRESS": {
+                "FanTopPermissionV2a": {}
+            }
+        },
+        "arguments": {
+            "agent": {
+                "index": 0,
+                "type": "Address",
+                "messages": {}
+            },
+            "orderId": {
+                "index": 1,
+                "type": "String",
+                "messages": {}
+            },
+            "refId": {
+                "index": 2,
+                "type": "String",
+                "messages": {}
+            },
+            "nftId": {
+                "index": 3,
+                "type": "UInt64",
+                "messages": {}
+            },
+            "version": {
+                "index": 4,
+                "type": "UInt32",
+                "messages": {}
+            },
+            "metadata": {
+                "index": 5,
+                "type": "String",
+                "messages": {}
+            },
+            "signature": {
+                "index": 6,
+                "type": "String",
+                "messages": {}
+            },
+            "keyIndex": {
+                "index": 7,
+                "type": "Int",
+                "messages": {}
+            }
+        }
+    }
+}

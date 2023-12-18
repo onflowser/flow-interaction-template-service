@@ -1,0 +1,79 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "9e05a9cde9138c4aef16a41b86f6e3ce0a26935acc21bc1008397e8bdfad78e9",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "AFL Buy pack"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Purchase AFL pack(s) for {price} USDC"
+                }
+            }
+        },
+        "cadence": "import AFLAdmin from 0xAFL_ADDRESS\nimport AFLPack from 0xAFL_ADDRESS\nimport FungibleToken from 0xFUNGIBLE_TOKEN_ADDRESS\nimport FiatToken from 0xFIAT_TOKEN_ADDRESS\n\ntransaction(templateIds: [UInt64], packTemplateId: UInt64, price:UFix64, receiptAddress: Address) {\n  let adminRef: &AFLPack.Pack\n  let temporaryVault : @FungibleToken.Vault\n  prepare(adminAccount: AuthAccount, tokenRecipientAccount: AuthAccount){\n      self.adminRef = adminAccount.borrow<&AFLPack.Pack>(from: AFLPack.PackStoragePath)\n          ??panic(\"could not borrow admin reference\")\n      let vaultRef = tokenRecipientAccount.borrow<&FiatToken.Vault>(from: FiatToken.VaultStoragePath)\n              ??panic(\"could not borrow vault\")\n      self.temporaryVault <- vaultRef.withdraw(amount: price)\n  }\n  execute{\n      self.adminRef.buyPack(templateIds: templateIds, packTemplateId: packTemplateId, receiptAddress: receiptAddress, price: price, flowPayment: <- self.temporaryVault)\n  }\n}",
+        "dependencies": {
+            "0xAFL_ADDRESS": {
+                "AFLPack": {
+                    "testnet": {
+                        "address": "0xb39a42479c1c2c77",
+                        "contract": "AFLPack",
+                        "fq_address": "A.0xb39a42479c1c2c77.AFLPack",
+                        "pin": "9f480a76a29283e85debad372cb6d3c77e16dd4cdf4509739db034d571e842db",
+                        "pin_block_height": 139076020
+                    }
+                }
+            },
+            "0xFUNGIBLE_TOKEN_ADDRESS": {
+                "FungibleToken": {
+                    "testnet": {
+                        "address": "0x9a0766d93b6608b7",
+                        "contract": "FungibleToken",
+                        "fq_address": "A.0x9a0766d93b6608b7.FungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 139076031
+                    }
+                }
+            },
+            "0xFIAT_TOKEN_ADDRESS": {
+                "FiatToken": {
+                    "testnet": {
+                        "address": "0xa983fecbed621163",
+                        "contract": "FiatToken",
+                        "fq_address": "A.0xa983fecbed621163.FiatToken",
+                        "pin": "ec7be5050256b8b9ab2a6f5550a42b6a64627fa7e684a88de5dd767864f0471a",
+                        "pin_block_height": 139076049
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "templateIds": {
+                "index": 0,
+                "type": "UInt64",
+                "messages": {}
+            },
+            "packTemplateId": {
+                "index": 1,
+                "type": "UInt64",
+                "messages": {}
+            },
+            "price": {
+                "index": 2,
+                "type": "UFix64",
+                "messages": {}
+            },
+            "receiptAddress": {
+                "index": 3,
+                "type": "Address",
+                "messages": {}
+            }
+        }
+    }
+}

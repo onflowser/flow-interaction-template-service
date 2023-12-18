@@ -1,0 +1,96 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "8d8070e0b7e0c1312c0d85fdfacb677d8fa9718952bdb31c0462d1157d501020",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "storefront Buy gaia item"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Purchase BALLERZ NFT for {buyPrice} FLOW from {storefrontAddress}"
+                }
+            }
+        },
+        "cadence": "import FungibleToken from 0xFUNGIBLE_TOKEN_ADDRESS\nimport NonFungibleToken from 0xNON_FUNGIBLE_TOKEN_ADDRESS\nimport NFTStorefront from 0xNFT_STOREFRONT_ADDRESS\nimport FlowToken from 0xFLOW_TOKEN_ADDRESS\nimport Gaia from 0xGAIA_ADDRESS\n\ntransaction(listingResourceID: UInt64, storefrontAddress: Address, buyPrice: UFix64) {\n    let paymentVault: @FungibleToken.Vault\n    let nftCollection: &Gaia.Collection{NonFungibleToken.Receiver}\n    let storefront: &NFTStorefront.Storefront{NFTStorefront.StorefrontPublic}\n    let listing: &NFTStorefront.Listing{NFTStorefront.ListingPublic}\n\n    prepare(signer: AuthAccount) {\n        if signer.borrow<&Gaia.Collection>(from: Gaia.CollectionStoragePath) == nil {\n            signer.save(<-Gaia.createEmptyCollection(), to: Gaia.CollectionStoragePath)\n            signer.link<&{Gaia.CollectionPublic}>(Gaia.CollectionPublicPath, target: Gaia.CollectionStoragePath)\n        }\n\n        self.storefront = getAccount(storefrontAddress)\n            .getCapability<&NFTStorefront.Storefront{NFTStorefront.StorefrontPublic}>(NFTStorefront.StorefrontPublicPath)\n            .borrow()\n            ?? panic(\"Could not borrow Storefront from provided address\")\n\n        self.listing = self.storefront.borrowListing(listingResourceID: listingResourceID)\n            ?? panic(\"No Offer with that ID in Storefront\")\n        let price = self.listing.getDetails().salePrice\n\n        assert(buyPrice == price, message: \"buyPrice is NOT same with salePrice\")\n\n        let flowTokenVault = signer.borrow<&FlowToken.Vault>(from: /storage/flowTokenVault)\n            ?? panic(\"Cannot borrow FlowToken vault from signer storage\")\n        self.paymentVault <- flowTokenVault.withdraw(amount: price)\n\n        self.nftCollection = signer.borrow<&Gaia.Collection{NonFungibleToken.Receiver}>(from: Gaia.CollectionStoragePath)\n            ?? panic(\"Cannot borrow NFT collection receiver from account\")\n    }\n\n    execute {\n        let item <- self.listing.purchase(payment: <-self.paymentVault)\n        self.nftCollection.deposit(token: <-item)\n        self.storefront.cleanup(listingResourceID: listingResourceID)\n    }\n}\n",
+        "dependencies": {
+            "0xFUNGIBLE_TOKEN_ADDRESS": {
+                "FungibleToken": {
+                    "testnet": {
+                        "address": "0x9a0766d93b6608b7",
+                        "contract": "FungibleToken",
+                        "fq_address": "A.0x9a0766d93b6608b7.FungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138898374
+                    }
+                }
+            },
+            "0xNON_FUNGIBLE_TOKEN_ADDRESS": {
+                "NonFungibleToken": {
+                    "testnet": {
+                        "address": "0x631e88ae7f1d7c20",
+                        "contract": "NonFungibleToken",
+                        "fq_address": "A.0x631e88ae7f1d7c20.NonFungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138898420
+                    }
+                }
+            },
+            "0xNFT_STOREFRONT_ADDRESS": {
+                "NFTStorefront": {
+                    "testnet": {
+                        "address": "0x94b06cfca1d8a476",
+                        "contract": "NFTStorefront",
+                        "fq_address": "A.0x94b06cfca1d8a476.NFTStorefront",
+                        "pin": "ba061d95016d5506e9f5d1afda15d82eb066aa8b0552e8b26dc7950fa5714d51",
+                        "pin_block_height": 138898479
+                    }
+                }
+            },
+            "0xFLOW_TOKEN_ADDRESS": {
+                "FlowToken": {
+                    "testnet": {
+                        "address": "0x7e60df042a9c0868",
+                        "contract": "FlowToken",
+                        "fq_address": "A.0x7e60df042a9c0868.FlowToken",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 138898498
+                    }
+                }
+            },
+            "0xGAIA_ADDRESS": {
+                "Gaia": {
+                    "testnet": {
+                        "address": "0xc523a8bbf10fc4a3",
+                        "contract": "Gaia",
+                        "fq_address": "A.0xc523a8bbf10fc4a3.Gaia",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 138898551
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "listingResourceID": {
+                "index": 0,
+                "type": "UInt64",
+                "messages": {}
+            },
+            "storefrontAddress": {
+                "index": 1,
+                "type": "Address",
+                "messages": {}
+            },
+            "buyPrice": {
+                "index": 2,
+                "type": "UFix64",
+                "messages": {}
+            }
+        }
+    }
+}

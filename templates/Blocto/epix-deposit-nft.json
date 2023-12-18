@@ -1,0 +1,80 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "eb601fe0a39aff50a3dfd70591ecb7356ca435c1abd04815cffcb384ecea609f",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "Epix Deposit nft"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Desposit nft(s) into a safe account"
+                }
+            }
+        },
+        "cadence": "import FungibleToken from 0xFUNGIBLE_TOKEN_ADDRESS\nimport FlowToken from 0xFLOW_TOKEN_ADDRESS\nimport NonFungibleToken from 0xNON_FUNGIBLE_TOKEN_ADDRESS\nimport Epix from 0xEPIX_ADDRESS\n\n// This transaction is for depositing a NFT into safe account\ntransaction(nftIds: [UInt64], userSafeRecipient: Address) {\n\n    let userCollectionRef: &Epix.Collection\n    prepare(user: AuthAccount) {\n        // borrow a reference to the safe NFT collection\n        self.userCollectionRef = user.borrow<&Epix.Collection>(from: Epix.CollectionStoragePath)\n            ?? panic(\"Could not borrow a reference to the user's collection\")\n    }\n\n    execute {\n        // Get the public account object for the user safe recipient\n        let recipient = getAccount(userSafeRecipient)\n\n        // borrow a public reference to the receivers collection\n        let depositRef = recipient.getCapability(Epix.CollectionPublicPath)!.borrow<&{NonFungibleToken.CollectionPublic}>()!\n\n        var x = 0;\n        // transfer NFT(s) to recipient\n        while x < nftIds.length {\n            // withdraw the NFT from the owner's collection\n            let nft <- self.userCollectionRef.withdraw(withdrawID: nftIds[x])\n\n            // Deposit the NFT in the recipient's collection\n            depositRef.deposit(token: <-nft)\n            x = x + 1;\n        }\n    }\n}",
+        "dependencies": {
+            "0xFUNGIBLE_TOKEN_ADDRESS": {
+                "FungibleToken": {
+                    "testnet": {
+                        "address": "0x9a0766d93b6608b7",
+                        "contract": "FungibleToken",
+                        "fq_address": "A.0x9a0766d93b6608b7.FungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 139076619
+                    }
+                }
+            },
+            "0xFLOW_TOKEN_ADDRESS": {
+                "FlowToken": {
+                    "testnet": {
+                        "address": "0x7e60df042a9c0868",
+                        "contract": "FlowToken",
+                        "fq_address": "A.0x7e60df042a9c0868.FlowToken",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 139076658
+                    }
+                }
+            },
+            "0xNON_FUNGIBLE_TOKEN_ADDRESS": {
+                "NonFungibleToken": {
+                    "testnet": {
+                        "address": "0x631e88ae7f1d7c20",
+                        "contract": "NonFungibleToken",
+                        "fq_address": "A.0x631e88ae7f1d7c20.NonFungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 139076703
+                    }
+                }
+            },
+            "0xEPIX_ADDRESS": {
+                "Epix": {
+                    "testnet": {
+                        "address": "0x244f523a150d41c1",
+                        "contract": "Epix",
+                        "fq_address": "A.0x244f523a150d41c1.Epix",
+                        "pin": "7723617b4999f66ce1942ee3847d899b74dca4b43ff6f7ce75f32c7d8b5b43a6",
+                        "pin_block_height": 139076797
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "nftIds": {
+                "index": 0,
+                "type": "UInt64",
+                "messages": {}
+            },
+            "userSafeRecipient": {
+                "index": 1,
+                "type": "Address",
+                "messages": {}
+            }
+        }
+    }
+}

@@ -1,0 +1,42 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "e50336ba216a4a9d9f24004e7a312e6669f91301d2fc6a570947a8a53da66692",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "Find Start auction"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Manually start an auction on {name}"
+                }
+            }
+        },
+        "cadence": "import FIND from 0xFIND_ADDRESS\n\ntransaction(name: String) {\n\tprepare(account: AuthAccount) {\n\n\t\tlet finLeases= account.borrow<&FIND.LeaseCollection>(from:FIND.LeaseStoragePath)!\n\t\tfinLeases.startAuction(name)\n\n\t}\n}\n\n",
+        "dependencies": {
+            "0xFIND_ADDRESS": {
+                "FIND": {
+                    "testnet": {
+                        "address": "0x37a05b1ecacc80f7",
+                        "contract": "FIND",
+                        "fq_address": "A.0x37a05b1ecacc80f7.FIND",
+                        "pin": "751fcffa1f40d4edff5f6cff49d14e6b67bbd33cad3d2dd61fdc04ce97db4a4a",
+                        "pin_block_height": 138840410
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "name": {
+                "index": 0,
+                "type": "String",
+                "messages": {}
+            }
+        }
+    }
+}

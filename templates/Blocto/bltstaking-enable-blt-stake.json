@@ -1,0 +1,82 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "27a9ffbb738bbc64e4203bbaf22e342cf6f4b7c5440fab4e8a8a48c685d9be95",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "BltStaking Enable blt stake"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Enable staking: {amount} BLT",
+                    "zh-CN": "启用质押: {amount} BLT 代币",
+                    "zh-TW": "啟用質押: {amount} BLT 代幣"
+                }
+            }
+        },
+        "cadence": "import FungibleToken from 0xFUNGIBLE_TOKEN_ADDRESS\nimport NonFungibleToken from 0xNON_FUNGIBLE_TOKEN_ADDRESS\nimport BloctoToken from 0xBLOCTO_TOKEN_ADDRESS\nimport BloctoPass from 0xBLOCTO_PASS_ADDRESS\n\ntransaction(amount: UFix64, index: Int) {\n\n  // The Vault resource that holds the tokens that are being transferred\n  let vaultRef: &BloctoToken.Vault\n\n  // The private reference to user's BloctoPass\n  let bloctoPassRef: &BloctoPass.NFT\n\n  prepare(signer: AuthAccount) {\n\n    // BloctoToken Vault\n    if signer.borrow<&BloctoToken.Vault>(from: BloctoToken.TokenStoragePath) == nil {\n      // Create a new Blocto Token Vault and put it in storage\n      signer.save(<-BloctoToken.createEmptyVault(), to: BloctoToken.TokenStoragePath)\n\n      // Create a public capability to the Vault that only exposes\n      // the deposit function through the Receiver interface\n      signer.link<&BloctoToken.Vault{FungibleToken.Receiver}>(\n        BloctoToken.TokenPublicReceiverPath,\n        target: BloctoToken.TokenStoragePath\n      )\n\n      // Create a public capability to the Vault that only exposes\n      // the balance field through the Balance interface\n      signer.link<&BloctoToken.Vault{FungibleToken.Balance}>(\n        BloctoToken.TokenPublicBalancePath,\n        target: BloctoToken.TokenStoragePath\n      )\n    }\n\n    // BloctoPass Collection\n    if signer.borrow<&BloctoPass.Collection>(from: /storage/bloctoPassCollection) == nil {\n      signer.save(<-BloctoPass.createEmptyCollection(), to: /storage/bloctoPassCollection)\n\n      signer.link<&{NonFungibleToken.CollectionPublic, BloctoPass.CollectionPublic}>(\n        /public/bloctoPassCollection,\n        target: /storage/bloctoPassCollection\n      )\n    }\n\n    let collectionRef = signer.getCapability(/public/bloctoPassCollection)!\n      .borrow<&{NonFungibleToken.CollectionPublic, BloctoPass.CollectionPublic}>()\n      ?? panic(\"Could not borrow collection public reference\")\n\n    if collectionRef.getIDs().length == 0 {\n      let minterRef = getAccount(0x7deafdfc288e422d).getCapability(/public/bloctoPassMinter)\n        .borrow<&{BloctoPass.MinterPublic}>()\n        ?? panic(\"Could not borrow minter public reference\")\n\n      minterRef.mintBasicNFT(recipient: collectionRef) \n    }\n\n    // Get a reference to the account's stored vault\n    self.vaultRef = signer.borrow<&BloctoToken.Vault>(from: BloctoToken.TokenStoragePath)\n      ?? panic(\"Could not borrow reference to the owner's Vault!\")\n\n    // Get a reference to the account's BloctoPass\n    let bloctoPassCollectionRef = signer.borrow<&BloctoPass.Collection>(from: /storage/bloctoPassCollection)\n      ?? panic(\"Could not borrow reference to the owner's BloctoPass collection!\")\n\n    let ids = bloctoPassCollectionRef.getIDs()\n\n    // Get a reference to the BloctoPass\n    self.bloctoPassRef = bloctoPassCollectionRef.borrowBloctoPassPrivate(id: ids[index])\n  }\n\n  execute {\n    let lockedBalance = self.bloctoPassRef.getIdleBalance()\n\n    if amount <= lockedBalance {\n      self.bloctoPassRef.stakeNewTokens(amount: amount)\n    } else if ((amount - lockedBalance) <= self.vaultRef.balance) {\n      self.bloctoPassRef.deposit(from: <-self.vaultRef.withdraw(amount: amount - lockedBalance))\n      self.bloctoPassRef.stakeNewTokens(amount: amount)\n    } else {\n      panic(\"Not enough tokens to stake!\")\n    }\n  }\n}",
+        "dependencies": {
+            "0xFUNGIBLE_TOKEN_ADDRESS": {
+                "FungibleToken": {
+                    "testnet": {
+                        "address": "0x9a0766d93b6608b7",
+                        "contract": "FungibleToken",
+                        "fq_address": "A.0x9a0766d93b6608b7.FungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 139076285
+                    }
+                }
+            },
+            "0xNON_FUNGIBLE_TOKEN_ADDRESS": {
+                "NonFungibleToken": {
+                    "testnet": {
+                        "address": "0x631e88ae7f1d7c20",
+                        "contract": "NonFungibleToken",
+                        "fq_address": "A.0x631e88ae7f1d7c20.NonFungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 139076309
+                    }
+                }
+            },
+            "0xBLOCTO_TOKEN_ADDRESS": {
+                "BloctoToken": {
+                    "testnet": {
+                        "address": "0x6e0797ac987005f5",
+                        "contract": "BloctoToken",
+                        "fq_address": "A.0x6e0797ac987005f5.BloctoToken",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 139076357
+                    }
+                }
+            },
+            "0xBLOCTO_PASS_ADDRESS": {
+                "BloctoPass": {
+                    "testnet": {
+                        "address": "0x7deafdfc288e422d",
+                        "contract": "BloctoPass",
+                        "fq_address": "A.0x7deafdfc288e422d.BloctoPass",
+                        "pin": "3c7796c792dc130c2e565c8246de8a8d5add43e7f340efe20c52568c43602b36",
+                        "pin_block_height": 139076481
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "amount": {
+                "index": 0,
+                "type": "UFix64",
+                "messages": {}
+            },
+            "index": {
+                "index": 1,
+                "type": "Int",
+                "messages": {}
+            }
+        }
+    }
+}

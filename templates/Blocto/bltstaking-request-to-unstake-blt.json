@@ -1,0 +1,49 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "ecc462b1269fd4e4b8e04c4faf4454c8e20cedf6c5f406500e024ecbe6cf091d",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "BltStaking Request to unstake blt"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Request to unstake: {amount} BLT",
+                    "zh-CN": "请求解除质押: {amount} BLT 代币",
+                    "zh-TW": "請求解除質押: {amount} BLT 代幣"
+                }
+            }
+        },
+        "cadence": "import BloctoPass from 0xBLOCTO_PASS_ADDRESS\n\ntransaction(amount: UFix64, index: Int) {\n  // The private reference to user's BloctoPass\n  let bloctoPassRef: &BloctoPass.NFT\n\n  prepare(account: AuthAccount) {\n    // Get a reference to the account's BloctoPass\n    let bloctoPassCollectionRef = account.borrow<&BloctoPass.Collection>(from: /storage/bloctoPassCollection)\n      ?? panic(\"Could not borrow reference to the owner's BloctoPass collection!\")\n\n    let ids = bloctoPassCollectionRef.getIDs()\n\n    // Get a reference to the BloctoPass\n    self.bloctoPassRef = bloctoPassCollectionRef.borrowBloctoPassPrivate(id: ids[index])\n  }\n\n  execute {\n    self.bloctoPassRef.requestUnstaking(amount: amount)\n  }\n}",
+        "dependencies": {
+            "0xBLOCTO_PASS_ADDRESS": {
+                "BloctoPass": {
+                    "testnet": {
+                        "address": "0x7deafdfc288e422d",
+                        "contract": "BloctoPass",
+                        "fq_address": "A.0x7deafdfc288e422d.BloctoPass",
+                        "pin": "3c7796c792dc130c2e565c8246de8a8d5add43e7f340efe20c52568c43602b36",
+                        "pin_block_height": 139076395
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "amount": {
+                "index": 0,
+                "type": "UFix64",
+                "messages": {}
+            },
+            "index": {
+                "index": 1,
+                "type": "Int",
+                "messages": {}
+            }
+        }
+    }
+}

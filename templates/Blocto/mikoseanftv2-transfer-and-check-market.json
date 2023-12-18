@@ -1,0 +1,69 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "3fd9c6ce275a63ed03ca38aef768b15d9658fde55789f1578bd2c4d2492682a0",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "mikoseanftv2 Transfer and check market"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Transfer NFT"
+                }
+            }
+        },
+        "cadence": "import MIKOSEANFTV2 from 0xMIKOSEA_MIKOSEANFTV2_ADDRESS\nimport MikoSeaMarket from 0xMIKOSEA_MARKET_ADDRESS\nimport NonFungibleToken from 0xNON_FUNGIBLE_TOKEN_ADDRESS\n\npub fun checkMarket(acct: AuthAccount, nftID: UInt64) {\n    if let storefrontRef = acct.borrow<&MikoSeaMarket.Storefront>(from: MikoSeaMarket.MarketStoragePath) {\n        for order in storefrontRef.getOrders() {\n            if order.nftType == Type<@MIKOSEANFTV2.NFT>() && order.nftID == nftID && (order.status == \"created\" || order.status == \"validated\") {\n                panic(\"NFT_IS_IN_LISTING\")\n            }\n        }\n    }\n}\ntransaction(nftID: UInt64, recipient: Address) {\n    let holder: &MIKOSEANFTV2.Collection\n    let recipientRef: &AnyResource{MIKOSEANFTV2.CollectionPublic}\n\n    prepare(signer: AuthAccount) {\n        self.holder = signer.borrow<&MIKOSEANFTV2.Collection>(from: MIKOSEANFTV2.CollectionStoragePath) ?? panic(\"NOT_SETUP\")\n\n        self.recipientRef = getAccount(recipient).getCapability<&{MIKOSEANFTV2.CollectionPublic}>(MIKOSEANFTV2.CollectionPublicPath).borrow() ?? panic(\"NOT_SETUP\")\n        checkMarket(acct: signer, nftID: nftID)\n    }\n\n    execute {\n        self.holder.transfer(nftID: nftID, recipient: self.recipientRef)\n    }\n}\n",
+        "dependencies": {
+            "0xMIKOSEA_MIKOSEANFTV2_ADDRESS": {
+                "MIKOSEANFTV2": {
+                    "testnet": {
+                        "address": "0x713306ac51ac7ddb",
+                        "contract": "MIKOSEANFTV2",
+                        "fq_address": "A.0x713306ac51ac7ddb.MIKOSEANFTV2",
+                        "pin": "bfeedef4b4548a7bab30ecf31c97eb781c67f2414b4913d5bb19e58aeebbc515",
+                        "pin_block_height": 138900406
+                    }
+                }
+            },
+            "0xMIKOSEA_MARKET_ADDRESS": {
+                "MikoSeaMarket": {
+                    "testnet": {
+                        "address": "0x713306ac51ac7ddb",
+                        "contract": "MikoSeaMarket",
+                        "fq_address": "A.0x713306ac51ac7ddb.MikoSeaMarket",
+                        "pin": "9524cc8b5eb8bb8f7d8cf4ee3c65374cafa55921d31d6f72ce08d1c4da8aad57",
+                        "pin_block_height": 138900528
+                    }
+                }
+            },
+            "0xNON_FUNGIBLE_TOKEN_ADDRESS": {
+                "NonFungibleToken": {
+                    "testnet": {
+                        "address": "0x631e88ae7f1d7c20",
+                        "contract": "NonFungibleToken",
+                        "fq_address": "A.0x631e88ae7f1d7c20.NonFungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138900557
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "acct": {
+                "index": 0,
+                "type": "AuthAccount",
+                "messages": {}
+            },
+            "nftID": {
+                "index": 1,
+                "type": "UInt64",
+                "messages": {}
+            }
+        }
+    }
+}

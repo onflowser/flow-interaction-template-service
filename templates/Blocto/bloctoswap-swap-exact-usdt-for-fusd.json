@@ -1,0 +1,82 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "0186c96d2301ddec1f8b1a2154bfb6ae8958a7e7f8c294c71793c7ac0ada0eb3",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "BloctoSwap Swap exact usdt for fusd"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Swap {amountIn} tUSDT for at least {minAmountOut} FUSD",
+                    "zh-CN": "将 {amountIn} tUSDT 兑换成至少 {minAmountOut} FUSD",
+                    "zh-TW": "將 {amountIn} tUSDT 兌換成至少 {minAmountOut} FUSD"
+                }
+            }
+        },
+        "cadence": "import FungibleToken from 0xFUNGIBLE_TOKEN_ADDRESS\nimport TeleportedTetherToken from 0xTELEPORTED_USDT_ADDRESS\nimport FUSD from 0xFUSD_ADDRESS\nimport FusdUsdtSwapPair from 0xFUSD_USDT_SWAP_ADDRESS\n\ntransaction(amountIn: UFix64, minAmountOut: UFix64) {\n  prepare(signer: AuthAccount) {\n    \n    \n\n    let teleportedTetherTokenVault = signer.borrow<&TeleportedTetherToken.Vault>(from: TeleportedTetherToken.TokenStoragePath) \n      ?? panic(\"Could not borrow a reference to Vault\")\n\n    let token0Vault <- teleportedTetherTokenVault.withdraw(amount: amountIn) as! @TeleportedTetherToken.Vault\n    let token1Vault <- FusdUsdtSwapPair.swapToken2ForToken1(from: <- token0Vault)\n\n      if signer.borrow<&FUSD.Vault>(from: /storage/fusdVault) == nil {\n    signer.save(<-FUSD.createEmptyVault(), to: /storage/fusdVault)\n    signer.link<&FUSD.Vault{FungibleToken.Receiver}>(\n      /public/fusdReceiver,\n      target: /storage/fusdVault\n    )\n    signer.link<&FUSD.Vault{FungibleToken.Balance}>(\n      /public/fusdBalance,\n      target: /storage/fusdVault\n    )\n  }\n    let fusdVault = signer.borrow<&FUSD.Vault>(from: /storage/fusdVault) \n      ?? panic(\"Could not borrow a reference to Vault\")\n\n    assert(token1Vault.balance >= minAmountOut, message: \"Output amount too small\")\n\n    fusdVault.deposit(from: <- token1Vault)\n  }\n}",
+        "dependencies": {
+            "0xFUNGIBLE_TOKEN_ADDRESS": {
+                "FungibleToken": {
+                    "testnet": {
+                        "address": "0x9a0766d93b6608b7",
+                        "contract": "FungibleToken",
+                        "fq_address": "A.0x9a0766d93b6608b7.FungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 139076128
+                    }
+                }
+            },
+            "0xTELEPORTED_USDT_ADDRESS": {
+                "TeleportedTetherToken": {
+                    "testnet": {
+                        "address": "0xab26e0a07d770ec1",
+                        "contract": "TeleportedTetherToken",
+                        "fq_address": "A.0xab26e0a07d770ec1.TeleportedTetherToken",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 139076133
+                    }
+                }
+            },
+            "0xFUSD_ADDRESS": {
+                "FUSD": {
+                    "testnet": {
+                        "address": "0xe223d8a629e49c68",
+                        "contract": "FUSD",
+                        "fq_address": "A.0xe223d8a629e49c68.FUSD",
+                        "pin": "0326c320322c4e8dde768ba2975c384184fb7e41765c2c87e79a2040bfc71be8",
+                        "pin_block_height": 139076144
+                    }
+                }
+            },
+            "0xFUSD_USDT_SWAP_ADDRESS": {
+                "FusdUsdtSwapPair": {
+                    "testnet": {
+                        "address": "0x3502a5dacaf350bb",
+                        "contract": "FusdUsdtSwapPair",
+                        "fq_address": "A.0x3502a5dacaf350bb.FusdUsdtSwapPair",
+                        "pin": "9524cc8b5eb8bb8f7d8cf4ee3c65374cafa55921d31d6f72ce08d1c4da8aad57",
+                        "pin_block_height": 139076179
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "amountIn": {
+                "index": 0,
+                "type": "UFix64",
+                "messages": {}
+            },
+            "minAmountOut": {
+                "index": 1,
+                "type": "UFix64",
+                "messages": {}
+            }
+        }
+    }
+}

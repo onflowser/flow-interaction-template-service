@@ -1,0 +1,60 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "8653c150f29e5bce9838d51f631a177c92639dd9088cddaed1d628993e3aafec",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "Evolution Force redeem"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Forced redeem of NFT {Uuid} on {BorrowerAddress} debit.",
+                    "zh-CN": "对 {BorrowerAddress} 借方强制清算 NFT {Uuid}",
+                    "zh-TW": "對 {BorrowerAddress} 借方強制清算 NFT {Uuid}"
+                }
+            }
+        },
+        "cadence": "import NonFungibleToken from 0xNON_FUNGIBLE_TOKEN_ADDRESS\nimport NFTLendingPlace from 0xMANTLEFI_NFTLENDINGPLACE\n\n// Let the lender get borrower's NFT by force\ntransaction(Uuid: UInt64, BorrowerAddress: Address) {\n\n    prepare(acct: AuthAccount) {\n\n        let borrower = getAccount(BorrowerAddress)\n\n        let lendingPlace = borrower.getCapability<&AnyResource{NFTLendingPlace.LendingPublic}>(/public/NFTLendingPlaceCollection)\n            .borrow()\n            ?? panic(\"Could not borrow borrower's NFT Lending Place resource\")\n\n        let ticketRef =  acct.borrow<&NFTLendingPlace.LenderTicket>(from: /storage/NFTLendingPlaceCollectionLenderTicket)\n            ?? panic(\"Could not borrow lender's LenderTicket resource\")\n\n        let returnNft <- lendingPlace.forcedRedeem(uuid: Uuid, lendticket: ticketRef)\n\n        let collectionRef = acct.borrow<&NonFungibleToken.Collection>(from: /storage/EvolutionCollection)\n            ?? panic(\"Could not borrow owner's NFT collection reference\")\n\n        collectionRef.deposit(token: <-returnNft)\n    }\n}\n",
+        "dependencies": {
+            "0xNON_FUNGIBLE_TOKEN_ADDRESS": {
+                "NonFungibleToken": {
+                    "testnet": {
+                        "address": "0x631e88ae7f1d7c20",
+                        "contract": "NonFungibleToken",
+                        "fq_address": "A.0x631e88ae7f1d7c20.NonFungibleToken",
+                        "pin": "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+                        "pin_block_height": 138889148
+                    }
+                }
+            },
+            "0xMANTLEFI_NFTLENDINGPLACE": {
+                "NFTLendingPlace": {
+                    "testnet": {
+                        "address": "0x615a6bf3445b9c61",
+                        "contract": "NFTLendingPlace",
+                        "fq_address": "A.0x615a6bf3445b9c61.NFTLendingPlace",
+                        "pin": "7723617b4999f66ce1942ee3847d899b74dca4b43ff6f7ce75f32c7d8b5b43a6",
+                        "pin_block_height": 138889230
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "Uuid": {
+                "index": 0,
+                "type": "UInt64",
+                "messages": {}
+            },
+            "BorrowerAddress": {
+                "index": 1,
+                "type": "Address",
+                "messages": {}
+            }
+        }
+    }
+}

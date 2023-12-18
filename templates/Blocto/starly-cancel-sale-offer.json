@@ -1,0 +1,42 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.0.0",
+    "id": "d02ef217e3b23d41ddc67f25f7fee715bc27469f79ff96e7c18f966f33204088",
+    "data": {
+        "type": "InteractionTemplate",
+        "interface": "",
+        "messages": {
+            "title": {
+                "i18n": {
+                    "en-US": "Starly Cancel sale offer"
+                }
+            },
+            "description": {
+                "i18n": {
+                    "en-US": "Remove Starly NFT #{itemID} from sale"
+                }
+            }
+        },
+        "cadence": "import StarlyCardMarket from 0xSTARLY_CARD_MARKET_ADDRESS\n\ntransaction(itemID: UInt64) {\n    prepare(account: AuthAccount) {\n        let offer <- account\n          .borrow<&StarlyCardMarket.Collection>(from: StarlyCardMarket.CollectionStoragePath)!\n          .remove(itemID: itemID)\n        destroy offer\n    }\n}\n",
+        "dependencies": {
+            "0xSTARLY_CARD_MARKET_ADDRESS": {
+                "StarlyCardMarket": {
+                    "testnet": {
+                        "address": "0x697d72a988a77070",
+                        "contract": "StarlyCardMarket",
+                        "fq_address": "A.0x697d72a988a77070.StarlyCardMarket",
+                        "pin": "29a94f46acbcd90cca98bdd1bb3e1cbe84d2c9c51367f391fb9d94e352626daf",
+                        "pin_block_height": 138891674
+                    }
+                }
+            }
+        },
+        "arguments": {
+            "itemID": {
+                "index": 0,
+                "type": "UInt64",
+                "messages": {}
+            }
+        }
+    }
+}
