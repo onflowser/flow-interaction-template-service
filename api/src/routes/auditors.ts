@@ -1,13 +1,8 @@
 import express, { Request, Response, Router } from "express";
-import { body } from "express-validator";
-import { validateRequest } from "../middlewares/validate-request";
-import { TemplateService } from "../services/template";
-import { genHash } from "../utils/gen-hash";
 import { mixpanelTrack } from "../utils/mixpanel";
-import { parseCadence } from "../utils/parse-cadence";
-import fs from "fs";
+import {AuditService} from "../services/audit";
 
-function auditorsRouter(auditorsJSONFile: JSON): Router {
+function auditorsRouter(auditService: AuditService): Router {
   const router = express.Router();
 
   router.get("/auditors", async (req: Request, res: Response) => {
@@ -25,7 +20,9 @@ function auditorsRouter(auditorsJSONFile: JSON): Router {
       );
     }
 
-    if (typeof auditorsJSONFile[network] === "undefined") {
+    const auditors = await auditService.getAuditorsByNetwork(network);
+
+    if (auditors === undefined) {
       mixpanelTrack("get_auditors", {
         network,
         status: 400,
@@ -42,7 +39,46 @@ function auditorsRouter(auditorsJSONFile: JSON): Router {
       status: 200,
     });
 
-    return res.send(auditorsJSONFile[network]);
+    return res.send(auditors);
+  });
+
+  router.get("/auditors/:address/audits", async (req: Request, res: Response) => {
+    const network = req.query.network as string;
+
+    if (!network) {
+      mixpanelTrack("get_auditor_audits", {
+        network,
+        status: 400,
+      });
+
+      res.status(400);
+      return res.send(
+          "GET /auditors/:address/audits -- 'network' in request parameters not found"
+      );
+    }
+
+    const auditors = await auditService.getAuditorsByNetwork(network);
+
+    if (auditors === undefined) {
+      mixpanelTrack("get_auditor_audits", {
+        network,
+        status: 400,
+      });
+
+      res.status(400);
+      return res.send(
+          "GET /auditors/:address/audits -- 'network' in request parameters not supported"
+      );
+    }
+
+    mixpanelTrack("get_auditor_audits", {
+      network,
+      status: 200,
+    });
+
+    const audits = await auditService.getAuditedTemplateIdsByAuditor(req.params.address, network);
+
+    return res.send(audits);
   });
 
   return router;

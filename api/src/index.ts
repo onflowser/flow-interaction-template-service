@@ -7,6 +7,7 @@ import { getConfig } from "./config";
 import initDB from "./db";
 import { TemplateService } from "./services/template";
 import * as cron from "cron";
+import {AuditService} from "./services/audit";
 
 const argv = yargs(hideBin(process.argv)).argv;
 const DEV = argv.dev;
@@ -78,7 +79,9 @@ async function run() {
       ? JSON.parse(fs.readFileSync(config.namesJsonFile, "utf8"))
       : {};
 
-    const app = initApp(templateService, auditorsJSONFile, namesJSONFile);
+    const auditService = new AuditService(auditorsJSONFile);
+
+    const app = initApp(templateService, auditService, namesJSONFile);
 
     app.listen(config.port, () => {
       console.log(`Listening on port ${config.port}!`);

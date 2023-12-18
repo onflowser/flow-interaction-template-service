@@ -3,9 +3,11 @@ import { TemplateService } from "../services/template";
 import { genHash } from "../utils/gen-hash";
 import { mixpanelTrack } from "../utils/mixpanel";
 import { parseCadence } from "../utils/parse-cadence";
+import {AuditService} from "../services/audit";
 
 function templateRouter(
   templateService: TemplateService,
+  auditService: AuditService,
   namesJSONFile: JSON
 ): Router {
   const router = express.Router();
@@ -95,6 +97,41 @@ function templateRouter(
     });
 
     return res.send(template);
+  });
+
+  router.get("/templates/:template_id/auditors", async (req: Request, res: Response) => {
+    const templateId = req.params.template_id;
+    const network = req.query.network as string;
+
+    if (!network) {
+      res.status(400);
+      return res.send(
+          "GET /templates/:template_id/auditors -- 'network' in request body not found"
+      );
+    }
+
+    const auditors = await auditService.getAuditorsByNetwork(network);
+
+    if (auditors === undefined) {
+      mixpanelTrack("get_auditors_by_template", {
+        network,
+        status: 400,
+      });
+
+      res.status(400);
+      return res.send(
+          "GET /templates/:template_id/auditors -- 'network' in request parameters not supported"
+      );
+    }
+
+    const audits = await auditService.getAuditorsByTemplateId(templateId, network);
+
+    mixpanelTrack("get_auditors_by_template", {
+      templateId,
+      status: 200,
+    });
+
+    return res.send(audits);
   });
 
   router.post("/templates/search", async (req: Request, res: Response) => {
