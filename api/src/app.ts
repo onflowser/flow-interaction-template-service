@@ -19,7 +19,6 @@ const corsOptions = {
 const initApp = (
   templateService: TemplateService,
   auditService: AuditService,
-  auditorsJSONFile: JSON,
   namesJSONFile: JSON
 ) => {
   const app = express();
@@ -27,8 +26,8 @@ const initApp = (
   app.use(cors(corsOptions));
   app.use(json());
   app.use(urlencoded({ extended: false }));
-  app.use(V1, templateRouter(templateService, namesJSONFile));
-  app.use(V1, auditorsRouter(auditService, auditorsJSONFile));
+  app.use(V1, templateRouter(templateService, auditService, namesJSONFile));
+  app.use(V1, auditorsRouter(auditService));
 
   app.all("*", async (req: Request, res: Response) => {
     return res.sendStatus(404);

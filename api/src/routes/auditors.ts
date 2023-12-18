@@ -2,7 +2,7 @@ import express, { Request, Response, Router } from "express";
 import { mixpanelTrack } from "../utils/mixpanel";
 import {AuditService} from "../services/audit";
 
-function auditorsRouter(auditService: AuditService, auditorsJSONFile: JSON): Router {
+function auditorsRouter(auditService: AuditService): Router {
   const router = express.Router();
 
   router.get("/auditors", async (req: Request, res: Response) => {
@@ -20,7 +20,9 @@ function auditorsRouter(auditService: AuditService, auditorsJSONFile: JSON): Rou
       );
     }
 
-    if (typeof auditorsJSONFile[network] === "undefined") {
+    const auditors = await auditService.getAuditorsByNetwork(network);
+
+    if (auditors === undefined) {
       mixpanelTrack("get_auditors", {
         network,
         status: 400,
@@ -37,7 +39,7 @@ function auditorsRouter(auditService: AuditService, auditorsJSONFile: JSON): Rou
       status: 200,
     });
 
-    return res.send(auditorsJSONFile[network]);
+    return res.send(auditors);
   });
 
   router.get("/auditors/:address/audits", async (req: Request, res: Response) => {
@@ -55,7 +57,9 @@ function auditorsRouter(auditService: AuditService, auditorsJSONFile: JSON): Rou
       );
     }
 
-    if (typeof auditorsJSONFile[network] === "undefined") {
+    const auditors = await auditService.getAuditorsByNetwork(network);
+
+    if (auditors === undefined) {
       mixpanelTrack("get_auditor_audits", {
         network,
         status: 400,

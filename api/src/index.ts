@@ -53,7 +53,6 @@ async function run() {
   const startAPIServer = async () => {
     console.log("Starting API server ....");
     const templateService = new TemplateService(config);
-    const auditService = new AuditService();
 
     console.log("...Seeding TemplateService...");
     await templateService.seed();
@@ -80,7 +79,9 @@ async function run() {
       ? JSON.parse(fs.readFileSync(config.namesJsonFile, "utf8"))
       : {};
 
-    const app = initApp(templateService, auditService, auditorsJSONFile, namesJSONFile);
+    const auditService = new AuditService(auditorsJSONFile);
+
+    const app = initApp(templateService, auditService, namesJSONFile);
 
     app.listen(config.port, () => {
       console.log(`Listening on port ${config.port}!`);

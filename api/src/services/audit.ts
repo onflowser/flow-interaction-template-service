@@ -5,9 +5,28 @@ type AuditManagerData = {
     audits: Record<string, true>;
 }
 
+type FlowNetwork = string;
+
+type Auditor = {
+    f_type: "FlowInteractionTemplateAuditor";
+    f_version: string;
+    address: string;
+    name: string;
+    twitter_url: string;
+    website_url: string;
+}
+
+type AuditorsJSON = Record<FlowNetwork, Auditor[] | undefined>
+
 export class AuditService {
 
-    public async getAuditsByAuditorAddress(address: string, network: string) {
+    constructor(private readonly auditorsJSON: AuditorsJSON) {}
+
+    public async getAuditorsByNetwork(network: FlowNetwork) {
+        return this.auditorsJSON[network];
+    }
+
+    public async getAuditsByAuditorAddress(address: string, network: FlowNetwork) {
         const accessNodeApi = this.getAccessNodeApiForNetwork(network);
 
         if (!accessNodeApi) {
@@ -38,11 +57,29 @@ export class AuditService {
             .map(entry => entry[0]);
     }
 
-    public async getAuditsByTemplateId(templateId: string, network: string) {
+    public async getAuditorsByTemplateId(templateId: string, network: FlowNetwork) {
+        const auditors = await this.getAuditorsByNetwork(network);
 
+        if (auditors === undefined) {
+            return [];
+        }
+
+        const auditorsWithAudits = await Promise.all(
+            auditors.map(async auditor => {
+                const audits = await this.getAuditsByAuditorAddress(auditor.address, network);
+                return {
+                    auditor,
+                    audits
+                }
+            })
+        );
+
+        return auditorsWithAudits
+            .filter(entry => entry.audits.some(auditedTemplateId => auditedTemplateId === templateId))
+            .map(entry => entry.auditor);
     }
 
-    private getAccessNodeApiForNetwork(network: string) {
+    private getAccessNodeApiForNetwork(network: FlowNetwork) {
         switch (network) {
             case "testnet":
                 return "https://rest-testnet.onflow.org";
