@@ -76,7 +76,7 @@ function auditorsRouter(auditService: AuditService): Router {
       status: 200,
     });
 
-    const audits = await auditService.getAuditsByAuditorAddress(req.params.address, network);
+    const audits = await auditService.getAuditedTemplateIdsByAuditor(req.params.address, network);
 
     return res.send(audits);
   });

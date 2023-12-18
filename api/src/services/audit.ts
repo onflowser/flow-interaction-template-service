@@ -26,7 +26,7 @@ export class AuditService {
         return this.auditorsJSON[network];
     }
 
-    public async getAuditsByAuditorAddress(address: string, network: FlowNetwork) {
+    public async getAuditedTemplateIdsByAuditor(address: string, network: FlowNetwork) {
         const accessNodeApi = this.getAccessNodeApiForNetwork(network);
 
         if (!accessNodeApi) {
@@ -66,7 +66,7 @@ export class AuditService {
 
         const auditorsWithAudits = await Promise.all(
             auditors.map(async auditor => {
-                const audits = await this.getAuditsByAuditorAddress(auditor.address, network);
+                const audits = await this.getAuditedTemplateIdsByAuditor(auditor.address, network);
                 return {
                     auditor,
                     audits
