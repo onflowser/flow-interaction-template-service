@@ -17,7 +17,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "sqlite3": "^5.0.11",
     "@onflow/cadence-parser": "0.26.0",
     "@onflow/fcl": "1.1.1-templates.8",
     "@onflow/rlp": "^1.0.2",
@@ -40,11 +39,13 @@
     "objection": "3.0.1",
     "pg": "^8.7.3",
     "sha3": "^2.1.4",
+    "sqlite3": "^5.0.11",
     "ts-node": "10.6.0",
     "typescript": "4.7.4",
     "yargs": "17.5.1"
   },
   "devDependencies": {
+    "@types/glob": "^8.1.0",
     "ts-node-dev": "2.0.0-0"
   }
 }

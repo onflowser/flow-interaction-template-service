@@ -11,6 +11,8 @@ node_modules
 
 # misc
 .DS_Store
+temp
+flow-cli
 
 # .env files
 .env
